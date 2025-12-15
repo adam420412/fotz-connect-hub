@@ -23,6 +23,7 @@ import {
   Shield,
   BarChart3,
   Calendar,
+  LayoutTemplate,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -53,6 +54,7 @@ const Sidebar = () => {
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
+    { icon: LayoutTemplate, label: "Szablony", href: "/templates" },
     { icon: Clock, label: "Czas pracy", href: "/time-tracking" },
     { icon: Calendar, label: "Kalendarz", href: "/team-calendar" },
     { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
