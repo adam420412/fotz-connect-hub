@@ -28,15 +28,18 @@ import {
   Loader2,
   ClipboardList,
   Paperclip,
+  Eye,
 } from "lucide-react";
-import { useClientRequests, CreateRequestData } from "@/hooks/useClientRequests";
+import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
+import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { briefConfigs, formatBriefAnswers } from "@/components/requests/briefConfig";
 import BriefQuiz from "@/components/requests/BriefQuiz";
 import BriefSummary from "@/components/requests/BriefSummary";
 import BriefAttachments, { BriefAttachment } from "@/components/requests/BriefAttachments";
+import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 
 const requestTypeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
   task: { label: "Nowe zadanie", icon: <CheckSquare className="h-4 w-4" /> },
@@ -62,10 +65,15 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 type DialogStep = "type_select" | "brief_quiz" | "summary";
 
 const NewRequest = () => {
-  const { requests, isLoading, createRequest, isCreating } = useClientRequests();
+  const { requests, isLoading, createRequest, updateRequest, isCreating } = useClientRequests();
   const { files } = useProjectFiles();
+  const { role } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>("type_select");
+  const [selectedRequest, setSelectedRequest] = useState<ClientRequest | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const isTeamMember = role && ["admin", "manager", "employee"].includes(role);
 
   // Form state
   const [formType, setFormType] = useState<CreateRequestData["request_type"]>("task");
@@ -120,6 +128,16 @@ const NewRequest = () => {
     resetForm();
   };
 
+  const handleRequestClick = (request: ClientRequest) => {
+    setSelectedRequest(request);
+    setIsDetailsOpen(true);
+  };
+
+  const handleStatusChange = (id: string, status: ClientRequest["status"]) => {
+    updateRequest({ id, status });
+    setIsDetailsOpen(false);
+  };
+
   const handleDialogClose = (open: boolean) => {
     if (!open) {
       resetForm();
@@ -170,7 +188,8 @@ const NewRequest = () => {
             {requests.map((request) => (
               <div
                 key={request.id}
-                className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30"
+                className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 cursor-pointer group"
+                onClick={() => handleRequestClick(request)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -179,7 +198,9 @@ const NewRequest = () => {
                       <h3 className="font-medium text-foreground">{request.title}</h3>
                     </div>
                     {request.description && (
-                      <p className="text-sm text-muted-foreground mb-3">{request.description}</p>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {request.description.split("\n")[0]}
+                      </p>
                     )}
                     <div className="flex items-center gap-3 text-sm">
                       <Badge variant={statusConfig[request.status].variant}>
@@ -194,12 +215,32 @@ const NewRequest = () => {
                       </span>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRequestClick(request);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Request Details Dialog */}
+      <RequestDetailsDialog
+        request={selectedRequest}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onStatusChange={handleStatusChange}
+        isTeamMember={isTeamMember}
+      />
 
       {/* Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>

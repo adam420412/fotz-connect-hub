@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Send, Loader2, Edit2, Paperclip, FileImage, FileText, FileVideo } from "lucide-react";
 import { BriefConfig } from "./briefConfig";
 import { BriefAttachment } from "./BriefAttachments";
 import { formatFileSize } from "@/hooks/useProjectFiles";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BriefSummaryProps {
   config: BriefConfig;
@@ -34,15 +36,42 @@ const BriefSummary = ({
   onSubmit,
   onBack,
 }: BriefSummaryProps) => {
+  const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
+  
   const answeredQuestions = config.questions.filter(
     (q) => answers[q.id] && answers[q.id].trim()
   );
+
+  // Load thumbnails for image attachments
+  useEffect(() => {
+    const loadThumbnails = async () => {
+      const imageAttachments = attachments.filter((a) => a.type.startsWith("image/"));
+      const urls: Record<string, string> = {};
+
+      for (const attachment of imageAttachments) {
+        const { data } = await supabase.storage
+          .from("project-files")
+          .createSignedUrl(attachment.storagePath, 3600);
+        if (data?.signedUrl) {
+          urls[attachment.id] = data.signedUrl;
+        }
+      }
+
+      setThumbnailUrls(urls);
+    };
+
+    if (attachments.length > 0) {
+      loadThumbnails();
+    }
+  }, [attachments]);
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <FileImage className="h-4 w-4 text-accent" />;
     if (type.startsWith("video/")) return <FileVideo className="h-4 w-4 text-primary" />;
     return <FileText className="h-4 w-4 text-muted-foreground" />;
   };
+
+  const isImage = (type: string) => type.startsWith("image/");
 
   return (
     <div className="space-y-6">
@@ -90,7 +119,7 @@ const BriefSummary = ({
           </p>
         )}
 
-        {/* Attachments */}
+        {/* Attachments with Thumbnails */}
         {attachments.length > 0 && (
           <div className="pt-4 border-t border-border">
             <div className="flex items-center gap-2 mb-3">
@@ -99,23 +128,56 @@ const BriefSummary = ({
                 Załączniki ({attachments.length})
               </p>
             </div>
+            
+            {/* Image Thumbnails Grid */}
+            {attachments.some((a) => isImage(a.type)) && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {attachments
+                  .filter((a) => isImage(a.type))
+                  .map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="relative aspect-square rounded-lg overflow-hidden bg-muted border border-border"
+                    >
+                      {thumbnailUrls[attachment.id] ? (
+                        <img
+                          src={thumbnailUrls[attachment.id]}
+                          alt={attachment.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-1">
+                        <p className="text-xs text-foreground truncate">{attachment.name}</p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Non-image files */}
             <div className="space-y-2">
-              {attachments.map((attachment) => (
-                <div
-                  key={attachment.id}
-                  className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
-                >
-                  {getFileIcon(attachment.type)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {attachment.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatFileSize(attachment.size)}
-                    </p>
+              {attachments
+                .filter((a) => !isImage(a.type))
+                .map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
+                  >
+                    {getFileIcon(attachment.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {attachment.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(attachment.size)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         )}
