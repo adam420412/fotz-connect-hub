@@ -34,6 +34,7 @@ import FileUploadDialog from "@/components/files/FileUploadDialog";
 import FilePreviewDialog from "@/components/files/FilePreviewDialog";
 import FileCommentsPanel from "@/components/files/FileCommentsPanel";
 import FileVersionHistoryDialog from "@/components/files/FileVersionHistoryDialog";
+import { FileThumbnail } from "@/components/files/FileThumbnail";
 
 const statusConfig: Record<FileStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   draft: { label: "Roboczy", variant: "secondary" },
@@ -196,10 +197,18 @@ const Files = () => {
                 className="group rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md"
               >
                 <div 
-                  className="mb-3 flex aspect-video items-center justify-center rounded-lg bg-muted cursor-pointer"
+                  className="mb-3 aspect-video rounded-lg overflow-hidden cursor-pointer relative group"
                   onClick={() => setPreviewFile(file)}
                 >
-                  <FileIcon type={file.file_type} />
+                  <FileThumbnail
+                    storagePath={file.storage_path}
+                    fileType={file.file_type}
+                    fileName={file.name}
+                    className="absolute inset-0 w-full h-full rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-lg">
+                    <Eye className="h-8 w-8 text-white drop-shadow-lg" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -285,7 +294,14 @@ const Files = () => {
                   <tr key={file.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <FileIcon type={file.file_type} />
+                        <div className="h-10 w-10 rounded overflow-hidden flex-shrink-0">
+                          <FileThumbnail
+                            storagePath={file.storage_path}
+                            fileType={file.file_type}
+                            fileName={file.name}
+                            className="h-full w-full"
+                          />
+                        </div>
                         <div>
                           <p className="font-medium text-foreground">{file.name}</p>
                           <p className="text-xs text-muted-foreground">{formatDate(file.created_at)}</p>
