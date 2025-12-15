@@ -418,6 +418,93 @@ export type Database = {
           },
         ]
       }
+      project_template_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_days: number | null
+          id: string
+          item_type: string
+          name: string
+          parent_id: string | null
+          priority: string | null
+          sort_order: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: number | null
+          id?: string
+          item_type: string
+          name: string
+          parent_id?: string | null
+          priority?: string | null
+          sort_order?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: number | null
+          id?: string
+          item_type?: string
+          name?: string
+          parent_id?: string | null
+          priority?: string | null
+          sort_order?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_template_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "project_template_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scheduled_posts: {
         Row: {
           author_id: string | null
