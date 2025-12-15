@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -9,7 +8,6 @@ interface DashboardLayoutProps {
   showNewButton?: boolean;
   onNewClick?: () => void;
   newButtonLabel?: string;
-  userRole?: "client" | "employee" | "manager" | "admin";
 }
 
 const DashboardLayout = ({
@@ -18,11 +16,10 @@ const DashboardLayout = ({
   showNewButton,
   onNewClick,
   newButtonLabel,
-  userRole = "client",
 }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar userRole={userRole} />
+      <Sidebar />
       <div className="pl-64">
         <Header
           title={title}

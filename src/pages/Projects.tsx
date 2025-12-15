@@ -104,7 +104,6 @@ const Projects = () => {
   return (
     <DashboardLayout
       title="Projekty"
-      userRole="manager"
       showNewButton
       newButtonLabel="Nowy projekt"
     >
