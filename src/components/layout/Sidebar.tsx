@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -16,23 +16,27 @@ import {
   CalendarDays,
   Bot,
   CalendarClock,
+  PlusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
-interface SidebarProps {
-  userRole?: "client" | "employee" | "manager" | "admin";
-}
-
-const Sidebar = ({ userRole = "client" }: SidebarProps) => {
+const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isTeamMember, signOut, profile } = useAuthContext();
 
   const clientNav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
+    { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
+    { icon: PlusCircle, label: "Nowe zadanie", href: "/new-request" },
   ];
 
   const teamNav = [
@@ -48,7 +52,20 @@ const Sidebar = ({ userRole = "client" }: SidebarProps) => {
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
   ];
 
-  const navItems = userRole === "client" ? clientNav : teamNav;
+  const navItems = isTeamMember ? teamNav : clientNav;
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wylogować",
+        variant: "destructive",
+      });
+    } else {
+      navigate("/auth");
+    }
+  };
 
   return (
     <aside
@@ -85,8 +102,22 @@ const Sidebar = ({ userRole = "client" }: SidebarProps) => {
           </Button>
         </div>
 
+        {/* User info */}
+        {!collapsed && profile && (
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-sm font-medium text-foreground truncate">
+              {profile.full_name || profile.email}
+            </p>
+            {profile.company_name && (
+              <p className="text-xs text-muted-foreground truncate">
+                {profile.company_name}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -121,6 +152,7 @@ const Sidebar = ({ userRole = "client" }: SidebarProps) => {
             {!collapsed && <span>Ustawienia</span>}
           </Link>
           <button
+            onClick={handleSignOut}
             className={cn(
               "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/10 hover:text-destructive",
               collapsed && "justify-center px-2"

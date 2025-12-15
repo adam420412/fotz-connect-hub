@@ -171,7 +171,7 @@ const MarketingNews = () => {
   const categories = [...new Set(news.map((item) => item.category))];
 
   return (
-    <DashboardLayout title="Newsy Marketingowe" userRole="manager">
+    <DashboardLayout title="Newsy Marketingowe">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

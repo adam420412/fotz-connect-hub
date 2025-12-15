@@ -110,7 +110,7 @@ const Settings = () => {
   };
 
   return (
-    <DashboardLayout title="Ustawienia" userRole="manager">
+    <DashboardLayout title="Ustawienia">
       <div className="max-w-3xl space-y-8">
         {/* Profile Section */}
         <section className="space-y-4">

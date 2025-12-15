@@ -117,7 +117,7 @@ const Team = () => {
   );
 
   return (
-    <DashboardLayout title="Zespół" userRole="manager">
+    <DashboardLayout title="Zespół">
       <div className="space-y-6">
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3">

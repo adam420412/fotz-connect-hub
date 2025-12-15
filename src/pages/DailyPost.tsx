@@ -273,7 +273,7 @@ const DailyPost = () => {
   };
 
   return (
-    <DashboardLayout title="Codzienny Post" userRole="manager">
+    <DashboardLayout title="Codzienny Post">
       <div className="space-y-6">
         {/* Header */}
         <div className="rounded-xl border border-border bg-card p-6">
