@@ -15,6 +15,7 @@ import {
   Newspaper,
   CalendarDays,
   Bot,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +40,7 @@ const Sidebar = ({ userRole = "client" }: SidebarProps) => {
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
+    { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: Users, label: "Zespół", href: "/team" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
