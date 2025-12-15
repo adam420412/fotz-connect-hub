@@ -51,6 +51,7 @@ import BriefSummary from "@/components/requests/BriefSummary";
 import BriefAttachments, { BriefAttachment } from "@/components/requests/BriefAttachments";
 import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 import RequestKanban from "@/components/requests/RequestKanban";
+import RequestCalendar from "@/components/requests/RequestCalendar";
 import { cn } from "@/lib/utils";
 
 const requestTypeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
@@ -75,7 +76,7 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 };
 
 type DialogStep = "type_select" | "brief_quiz" | "summary";
-type ViewMode = "list" | "kanban";
+type ViewMode = "list" | "kanban" | "calendar";
 
 const getDeadlineInfo = (deadline: string | null) => {
   if (!deadline) return null;
@@ -309,6 +310,14 @@ const NewRequest = () => {
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
+              <Button
+                variant={viewMode === "calendar" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode("calendar")}
+              >
+                <Calendar className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         )}
@@ -343,6 +352,12 @@ const NewRequest = () => {
             requests={filteredRequests}
             onRequestClick={handleRequestClick}
             onStatusChange={handleStatusChange}
+          />
+        ) : viewMode === "calendar" ? (
+          <RequestCalendar
+            requests={requests}
+            onRequestClick={handleRequestClick}
+            onDeadlineChange={handleDeadlineChange}
           />
         ) : (
           <div className="space-y-4">
