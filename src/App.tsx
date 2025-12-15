@@ -20,6 +20,8 @@ import MarketingNews from "./pages/MarketingNews";
 import PostSchedule from "./pages/PostSchedule";
 import NewRequest from "./pages/NewRequest";
 import Invitations from "./pages/Invitations";
+import ApprovalCenter from "./pages/ApprovalCenter";
+import TimeTracking from "./pages/TimeTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="/post-schedule" element={<ProtectedRoute><PostSchedule /></ProtectedRoute>} />
             <Route path="/new-request" element={<ProtectedRoute><NewRequest /></ProtectedRoute>} />
             <Route path="/invitations" element={<ProtectedRoute requireTeamMember><Invitations /></ProtectedRoute>} />
+            <Route path="/approval-center" element={<ProtectedRoute><ApprovalCenter /></ProtectedRoute>} />
+            <Route path="/time-tracking" element={<ProtectedRoute requireTeamMember><TimeTracking /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

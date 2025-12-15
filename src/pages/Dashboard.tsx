@@ -1,39 +1,30 @@
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
 import ProjectCard from "@/components/dashboard/ProjectCard";
 import TaskItem from "@/components/dashboard/TaskItem";
 import RecentActivity from "@/components/dashboard/RecentActivity";
-import { FolderKanban, CheckSquare, Clock, FileCheck } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  FolderKanban, 
+  CheckSquare, 
+  Clock, 
+  FileCheck,
+  ArrowRight,
+  Timer,
+  FileBox,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useTimeTracking, formatDuration } from "@/hooks/useTimeTracking";
+import { useProjectFiles } from "@/hooks/useProjectFiles";
+import { useClientRequests } from "@/hooks/useClientRequests";
 
-// Mock data
-const stats = [
-  {
-    title: "Aktywne projekty",
-    value: 4,
-    icon: FolderKanban,
-    trend: { value: 12, positive: true },
-  },
-  {
-    title: "Zadania w toku",
-    value: 12,
-    icon: CheckSquare,
-    description: "3 do akceptacji",
-  },
-  {
-    title: "Do akceptacji",
-    value: 5,
-    icon: FileCheck,
-    description: "Pliki i materiały",
-  },
-  {
-    title: "Czas realizacji",
-    value: "2.3d",
-    icon: Clock,
-    trend: { value: 8, positive: false },
-  },
-];
-
+// Mock data for projects and activities (will be replaced with real data later)
 const projects = [
   {
     id: "1",
@@ -56,63 +47,6 @@ const projects = [
     dueDate: "30 sty",
     status: "active" as const,
     team: [{ name: "Tomek W." }, { name: "Kasia M." }],
-  },
-  {
-    id: "3",
-    name: "Strona WWW - XYZ Corp",
-    description: "Projekt i wdrożenie nowej strony firmowej",
-    progress: 90,
-    tasksCompleted: 18,
-    totalTasks: 20,
-    dueDate: "10 sty",
-    status: "active" as const,
-    team: [
-      { name: "Piotr N." },
-      { name: "Anna K." },
-      { name: "Michał P." },
-      { name: "Ewa S." },
-      { name: "Jan Z." },
-    ],
-  },
-];
-
-const tasks = [
-  {
-    id: "1",
-    title: "Przygotowanie prezentacji brandingu",
-    status: "in_progress" as const,
-    priority: "high" as const,
-    dueDate: "Dziś",
-    assignee: "Anna K.",
-    comments: 3,
-    projectName: "Rebranding Klient ABC",
-  },
-  {
-    id: "2",
-    title: "Post Instagram - promocja świąteczna",
-    status: "review" as const,
-    priority: "urgent" as const,
-    dueDate: "Jutro",
-    attachments: 2,
-    projectName: "Kampania Social Media",
-  },
-  {
-    id: "3",
-    title: "Wdrożenie strony głównej",
-    status: "todo" as const,
-    priority: "medium" as const,
-    dueDate: "12 sty",
-    assignee: "Piotr N.",
-    projectName: "Strona WWW - XYZ Corp",
-  },
-  {
-    id: "4",
-    title: "Akceptacja kolorystyki",
-    status: "review" as const,
-    priority: "high" as const,
-    dueDate: "10 sty",
-    comments: 5,
-    projectName: "Rebranding Klient ABC",
   },
 ];
 
@@ -141,22 +75,52 @@ const activities = [
     time: "2 godz. temu",
     user: { name: "Ewa S." },
   },
-  {
-    id: "4",
-    type: "file_uploaded" as const,
-    title: "Nowy plik dodany",
-    description: 'Dodano "Mockup_strona_glowna.fig"',
-    time: "3 godz. temu",
-    user: { name: "Piotr N." },
-  },
 ];
 
 const Dashboard = () => {
   const { profile, isTeamMember } = useAuthContext();
-  
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { runningEntry, todayTotal } = useTimeTracking();
+  const { files } = useProjectFiles();
+  const { requests } = useClientRequests();
+
   const displayName = isTeamMember 
     ? profile?.full_name || "Zespół"
     : profile?.company_name || profile?.full_name || "Klient";
+
+  // Get pending files for client
+  const pendingFiles = files.filter(f => f.status === "pending_approval");
+  
+  // Get user's pending requests
+  const pendingRequests = requests.filter(r => r.status === "pending" || r.status === "in_progress");
+
+  // Dynamic stats based on real data
+  const dynamicStats = [
+    {
+      title: isTeamMember ? "Aktywne zadania" : "Aktywne projekty",
+      value: stats?.activeRequests || 0,
+      icon: FolderKanban,
+      description: isTeamMember ? "W realizacji" : undefined,
+    },
+    {
+      title: "Do akceptacji",
+      value: stats?.pendingApprovalFiles || 0,
+      icon: FileCheck,
+      description: "Pliki oczekujące",
+    },
+    {
+      title: isTeamMember ? "Czas dzisiaj" : "Zadania w toku",
+      value: isTeamMember ? formatDuration(todayTotal) : pendingRequests.length,
+      icon: isTeamMember ? Clock : CheckSquare,
+      description: isTeamMember && runningEntry ? "Timer aktywny" : undefined,
+    },
+    {
+      title: "Ukończone",
+      value: stats?.completedTasksThisWeek || 0,
+      icon: CheckSquare,
+      description: "W tym tygodniu",
+    },
+  ];
 
   return (
     <DashboardLayout title="Dashboard">
@@ -170,24 +134,82 @@ const Dashboard = () => {
             Witaj, <span className="font-medium text-foreground">{displayName}</span>
           </p>
         </div>
+
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
+          {dynamicStats.map((stat) => (
             <StatCard key={stat.title} {...stat} />
           ))}
         </div>
+
+        {/* Quick Actions for Clients */}
+        {!isTeamMember && pendingFiles.length > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <AlertCircle className="h-5 w-5 text-primary" />
+                Materiały do akceptacji
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Masz {pendingFiles.length} {pendingFiles.length === 1 ? "plik" : "plików"} oczekujących na akceptację
+              </p>
+              <Link to="/approval-center">
+                <Button variant="gradient" className="gap-2">
+                  Przejdź do centrum akceptacji
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Team Time Tracking Widget */}
+        {isTeamMember && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Timer className="h-5 w-5 text-primary" />
+                Śledzenie czasu
+              </CardTitle>
+              <Link to="/time-tracking">
+                <Button variant="outline" size="sm" className="gap-1">
+                  Zobacz więcej
+                  <ArrowRight className="h-3 w-3" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {runningEntry ? (
+                <div className="flex items-center gap-4">
+                  <Badge variant="default" className="animate-pulse">
+                    Timer aktywny
+                  </Badge>
+                  <span className="text-muted-foreground">
+                    {runningEntry.description || "Praca w toku..."}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">
+                  Brak aktywnego timera. Dzisiaj: {formatDuration(todayTotal)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Projects */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Aktywne projekty</h2>
-              <a
-                href="/projects"
+              <Link
+                to="/projects"
                 className="text-sm text-primary hover:underline"
               >
                 Zobacz wszystkie
-              </a>
+              </Link>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {projects.slice(0, 2).map((project) => (
@@ -202,20 +224,29 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Tasks */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Ostatnie zadania</h2>
-            <a href="/tasks" className="text-sm text-primary hover:underline">
-              Zobacz wszystkie
-            </a>
+        {/* Recent Client Requests for Clients */}
+        {!isTeamMember && pendingRequests.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Twoje ostatnie zadania</h2>
+              <Link to="/tasks" className="text-sm text-primary hover:underline">
+                Zobacz wszystkie
+              </Link>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {pendingRequests.slice(0, 4).map((request) => (
+                <TaskItem 
+                  key={request.id}
+                  id={request.id}
+                  title={request.title}
+                  status={request.status === "pending" ? "todo" : "in_progress"}
+                  priority={request.priority === "normal" ? "medium" : request.priority as "low" | "high" | "urgent"}
+                  projectName={request.request_type}
+                />
+              ))}
+            </div>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {tasks.map((task) => (
-              <TaskItem key={task.id} {...task} />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

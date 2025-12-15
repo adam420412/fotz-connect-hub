@@ -18,6 +18,8 @@ import {
   CalendarClock,
   PlusCircle,
   UserPlus,
+  Clock,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -35,6 +37,7 @@ const Sidebar = () => {
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
+    { icon: FileCheck, label: "Akceptacja", href: "/approval-center" },
     { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
     { icon: PlusCircle, label: "Nowe zadanie", href: "/new-request" },
@@ -45,6 +48,7 @@ const Sidebar = () => {
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
+    { icon: Clock, label: "Czas pracy", href: "/time-tracking" },
     { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: Users, label: "Zespół", href: "/team" },
     { icon: UserPlus, label: "Zaproszenia", href: "/invitations" },
