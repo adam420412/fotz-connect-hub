@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Clock,
   User,
@@ -30,14 +37,18 @@ import {
   MessageSquare,
   Send,
   UserPlus,
+  CalendarIcon,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import { ClientRequest } from "@/hooks/useClientRequests";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { pl } from "date-fns/locale";
 import { formatFileSize } from "@/hooks/useProjectFiles";
 import RequestComments from "./RequestComments";
+import { cn } from "@/lib/utils";
 
 interface RequestDetailsDialogProps {
   request: ClientRequest | null;
@@ -45,8 +56,32 @@ interface RequestDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   onStatusChange: (id: string, status: ClientRequest["status"]) => void;
   onAssign?: (id: string, assignedTo: string | null) => void;
+  onDeadlineChange?: (id: string, deadline: string | null) => void;
   isTeamMember?: boolean;
 }
+
+const getDeadlineInfo = (deadline: string | null) => {
+  if (!deadline) return null;
+  
+  const deadlineDate = new Date(deadline);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (isPast(deadlineDate) && !isToday(deadlineDate)) {
+    return { text: "Po terminie!", className: "text-destructive", urgent: true };
+  }
+  if (isToday(deadlineDate)) {
+    return { text: "Dziś", className: "text-orange-600", urgent: true };
+  }
+  if (isTomorrow(deadlineDate)) {
+    return { text: "Jutro", className: "text-orange-500", urgent: false };
+  }
+  const days = differenceInDays(deadlineDate, today);
+  if (days <= 3) {
+    return { text: `Za ${days} dni`, className: "text-yellow-600", urgent: false };
+  }
+  return { text: format(deadlineDate, "d MMM", { locale: pl }), className: "text-muted-foreground", urgent: false };
+};
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   pending: { label: "Oczekuje", variant: "outline" },
@@ -81,10 +116,12 @@ const RequestDetailsDialog = ({
   onOpenChange,
   onStatusChange,
   onAssign,
+  onDeadlineChange,
   isTeamMember = false,
 }: RequestDetailsDialogProps) => {
   const [newStatus, setNewStatus] = useState<ClientRequest["status"]>("pending");
   const [newAssignee, setNewAssignee] = useState<string>("");
+  const [newDeadline, setNewDeadline] = useState<Date | undefined>(undefined);
   const [attachments, setAttachments] = useState<ParsedAttachment[]>([]);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [briefSections, setBriefSections] = useState<{ question: string; answer: string }[]>([]);
@@ -94,6 +131,7 @@ const RequestDetailsDialog = ({
     if (request) {
       setNewStatus(request.status);
       setNewAssignee(request.assigned_to || "unassigned");
+      setNewDeadline(request.deadline ? new Date(request.deadline) : undefined);
       parseDescription(request.description);
     }
   }, [request]);
@@ -207,9 +245,18 @@ const RequestDetailsDialog = ({
     }
   };
 
+  const handleDeadlineUpdate = (date: Date | undefined) => {
+    setNewDeadline(date);
+    if (request && onDeadlineChange) {
+      const deadlineStr = date ? format(date, "yyyy-MM-dd") : null;
+      onDeadlineChange(request.id, deadlineStr);
+    }
+  };
+
   if (!request) return null;
 
   const typeConfig = requestTypeConfig[request.request_type] || requestTypeConfig.other;
+  const deadlineInfo = getDeadlineInfo(request.deadline);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -234,6 +281,13 @@ const RequestDetailsDialog = ({
               <Clock className="h-3.5 w-3.5" />
               {format(new Date(request.created_at), "d MMMM yyyy, HH:mm", { locale: pl })}
             </span>
+            {deadlineInfo && (
+              <span className={cn("flex items-center gap-1", deadlineInfo.className)}>
+                {deadlineInfo.urgent && <AlertTriangle className="h-3.5 w-3.5" />}
+                <CalendarIcon className="h-3.5 w-3.5" />
+                Termin: {deadlineInfo.text}
+              </span>
+            )}
           </div>
 
           {/* Status & Assignment (Team Only) */}
@@ -303,8 +357,56 @@ const RequestDetailsDialog = ({
                     >
                       Zapisz
                     </Button>
-                  </div>
                 </div>
+
+                {/* Deadline */}
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="flex items-center gap-1">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    Termin wykonania
+                  </Label>
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "flex-1 justify-start text-left font-normal",
+                            !newDeadline && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {newDeadline ? format(newDeadline, "d MMMM yyyy", { locale: pl }) : "Wybierz termin"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={newDeadline}
+                          onSelect={handleDeadlineUpdate}
+                          locale={pl}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {newDeadline && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeadlineUpdate(undefined)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {deadlineInfo && (
+                    <p className={cn("text-sm flex items-center gap-1", deadlineInfo.className)}>
+                      {deadlineInfo.urgent && <AlertTriangle className="h-3.5 w-3.5" />}
+                      {deadlineInfo.text}
+                    </p>
+                  )}
+                </div>
+              </div>
               </div>
 
               {/* Current Assignee Display */}
