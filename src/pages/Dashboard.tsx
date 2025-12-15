@@ -4,6 +4,7 @@ import ProjectCard from "@/components/dashboard/ProjectCard";
 import TaskItem from "@/components/dashboard/TaskItem";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import { FolderKanban, CheckSquare, Clock, FileCheck } from "lucide-react";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 // Mock data
 const stats = [
@@ -151,9 +152,24 @@ const activities = [
 ];
 
 const Dashboard = () => {
+  const { profile, isTeamMember } = useAuthContext();
+  
+  const displayName = isTeamMember 
+    ? profile?.full_name || "Zespół"
+    : profile?.company_name || profile?.full_name || "Klient";
+
   return (
     <DashboardLayout title="Dashboard">
       <div className="space-y-6">
+        {/* Welcome Header */}
+        <div className="pb-2">
+          <h1 className="text-2xl font-bold text-foreground">
+            {isTeamMember ? "Panel zespołu" : "Panel klienta"}
+          </h1>
+          <p className="text-muted-foreground">
+            Witaj, <span className="font-medium text-foreground">{displayName}</span>
+          </p>
+        </div>
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
