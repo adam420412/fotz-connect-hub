@@ -86,6 +86,7 @@ const PostSchedule = () => {
   const [formDate, setFormDate] = useState<Date | undefined>(undefined);
   const [formTime, setFormTime] = useState("");
   const [formClient, setFormClient] = useState<string>("agency");
+  const [formNewClient, setFormNewClient] = useState("");
   const [formStatus, setFormStatus] = useState<"scheduled" | "draft">("scheduled");
 
   const { posts, isLoading, createPost, updatePost, deletePost, isCreating } = useScheduledPosts(
@@ -128,6 +129,7 @@ const PostSchedule = () => {
     setFormDate(undefined);
     setFormTime("");
     setFormClient("agency");
+    setFormNewClient("");
     setFormStatus("scheduled");
     setEditingPost(null);
   };
@@ -155,6 +157,16 @@ const PostSchedule = () => {
 
   const handleSubmit = () => {
     if (!formTitle.trim() || !formContent.trim() || !formDate) return;
+    
+    // Determine client name
+    let clientName: string | null = null;
+    if (formClient === "agency") {
+      clientName = null;
+    } else if (formClient === "new_client") {
+      clientName = formNewClient.trim() || null;
+    } else {
+      clientName = formClient;
+    }
 
     const postData: CreatePostData = {
       title: formTitle.trim(),
@@ -164,7 +176,7 @@ const PostSchedule = () => {
       scheduled_date: format(formDate, "yyyy-MM-dd"),
       scheduled_time: formTime || undefined,
       status: formStatus,
-      client_name: formClient === "agency" ? null : formClient,
+      client_name: clientName,
     };
 
     if (editingPost) {
@@ -494,7 +506,8 @@ const PostSchedule = () => {
                 <Label>Nazwa nowego klienta</Label>
                 <Input
                   placeholder="Wpisz nazwę klienta"
-                  onChange={(e) => setFormClient(e.target.value)}
+                  value={formNewClient}
+                  onChange={(e) => setFormNewClient(e.target.value)}
                 />
               </div>
             )}

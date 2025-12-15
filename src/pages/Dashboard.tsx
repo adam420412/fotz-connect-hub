@@ -151,8 +151,11 @@ const activities = [
 ];
 
 const Dashboard = () => {
+  // TODO: Get user role from auth context when implemented
+  const userRole = "manager"; // Temporary: show team navigation
+  
   return (
-    <DashboardLayout title="Dashboard" userRole="client">
+    <DashboardLayout title="Dashboard" userRole={userRole}>
       <div className="space-y-6">
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
