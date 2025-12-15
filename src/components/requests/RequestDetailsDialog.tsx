@@ -34,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { formatFileSize } from "@/hooks/useProjectFiles";
+import RequestComments from "./RequestComments";
 
 interface RequestDetailsDialogProps {
   request: ClientRequest | null;
@@ -345,6 +346,10 @@ const RequestDetailsDialog = ({
               )}
             </div>
           )}
+
+          {/* Comments Section */}
+          <Separator />
+          <RequestComments requestId={request.id} />
         </div>
       </DialogContent>
     </Dialog>

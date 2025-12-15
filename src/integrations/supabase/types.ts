@@ -505,6 +505,44 @@ export type Database = {
         }
         Relationships: []
       }
+      request_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          request_id: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          request_id: string
+          user_id: string
+          user_name: string
+          user_role?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_comments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "client_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_posts: {
         Row: {
           author_id: string | null

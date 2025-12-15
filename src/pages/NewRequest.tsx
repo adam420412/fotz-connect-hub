@@ -29,6 +29,10 @@ import {
   ClipboardList,
   Paperclip,
   Eye,
+  Filter,
+  ArrowUpDown,
+  SortAsc,
+  SortDesc,
 } from "lucide-react";
 import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
@@ -75,6 +79,12 @@ const NewRequest = () => {
 
   const isTeamMember = role && ["admin", "manager", "employee"].includes(role);
 
+  // Filter & Sort state
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"date" | "priority">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   // Form state
   const [formType, setFormType] = useState<CreateRequestData["request_type"]>("task");
   const [formTitle, setFormTitle] = useState("");
@@ -82,6 +92,25 @@ const NewRequest = () => {
   const [formFileId, setFormFileId] = useState<string>("");
   const [briefAnswers, setBriefAnswers] = useState<Record<string, string>>({});
   const [briefAttachments, setBriefAttachments] = useState<BriefAttachment[]>([]);
+
+  // Priority order for sorting
+  const priorityOrder = { urgent: 4, high: 3, normal: 2, low: 1 };
+
+  // Filtered and sorted requests
+  const filteredRequests = requests
+    .filter((r) => filterStatus === "all" || r.status === filterStatus)
+    .filter((r) => filterPriority === "all" || r.priority === filterPriority)
+    .sort((a, b) => {
+      if (sortBy === "date") {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+      } else {
+        const prioA = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+        const prioB = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+        return sortOrder === "desc" ? prioB - prioA : prioA - prioB;
+      }
+    });
 
   const resetForm = () => {
     setFormType("task");
@@ -166,6 +195,65 @@ const NewRequest = () => {
           </Button>
         </div>
 
+        {/* Filters & Sort */}
+        {requests.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl border border-border bg-card">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Filtry:</span>
+            </div>
+            
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszystkie statusy</SelectItem>
+                {Object.entries(statusConfig).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Priorytet" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszystkie priorytety</SelectItem>
+                {Object.entries(priorityConfig).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "date" | "priority")}>
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Data</SelectItem>
+                  <SelectItem value="priority">Priorytet</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+              >
+                {sortOrder === "desc" ? (
+                  <SortDesc className="h-4 w-4" />
+                ) : (
+                  <SortAsc className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Request List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -183,9 +271,20 @@ const NewRequest = () => {
               Wyślij pierwsze zadanie
             </Button>
           </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-8 text-center">
+            <Filter className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Brak wyników</h3>
+            <p className="text-muted-foreground">
+              Zmień filtry, aby zobaczyć więcej zadań
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
-            {requests.map((request) => (
+            <p className="text-sm text-muted-foreground">
+              Pokazuję {filteredRequests.length} z {requests.length} zadań
+            </p>
+            {filteredRequests.map((request) => (
               <div
                 key={request.id}
                 className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 cursor-pointer group"
