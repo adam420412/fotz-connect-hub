@@ -39,6 +39,7 @@ import {
   List,
   Calendar,
   AlertTriangle,
+  Tag,
 } from "lucide-react";
 import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
@@ -206,6 +207,10 @@ const NewRequest = () => {
 
   const handleDeadlineChange = (id: string, deadline: string | null) => {
     updateRequest({ id, deadline });
+  };
+
+  const handleCategoryChange = (id: string, categoryId: string | null) => {
+    updateRequest({ id, category_id: categoryId });
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -404,6 +409,18 @@ const NewRequest = () => {
                             {deadlineInfo.text}
                           </span>
                         )}
+                        {request.category && (
+                          <span 
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{ 
+                              backgroundColor: `${request.category.color}20`,
+                              color: request.category.color 
+                            }}
+                          >
+                            <Tag className="h-3 w-3" />
+                            {request.category.name}
+                          </span>
+                        )}
                         {request.assigned_member && (
                           <span className="flex items-center gap-1.5 text-muted-foreground">
                             <Avatar className="h-5 w-5">
@@ -447,6 +464,7 @@ const NewRequest = () => {
         onStatusChange={handleStatusChange}
         onAssign={handleAssign}
         onDeadlineChange={handleDeadlineChange}
+        onCategoryChange={handleCategoryChange}
         isTeamMember={isTeamMember}
       />
 

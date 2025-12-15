@@ -15,6 +15,7 @@ export interface ClientRequest {
   assigned_to: string | null;
   deadline: string | null;
   reminder_sent: boolean;
+  category_id: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -23,6 +24,11 @@ export interface ClientRequest {
     name: string;
     email: string;
     avatar_url: string | null;
+  } | null;
+  category?: {
+    id: string;
+    name: string;
+    color: string;
   } | null;
 }
 
@@ -58,6 +64,11 @@ export function useClientRequests() {
             name,
             email,
             avatar_url
+          ),
+          category:task_categories(
+            id,
+            name,
+            color
           )
         `)
         .order("created_at", { ascending: false });
