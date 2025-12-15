@@ -17,6 +17,7 @@ import {
   Bot,
   CalendarClock,
   PlusCircle,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -46,6 +47,7 @@ const Sidebar = () => {
     { icon: FileBox, label: "Pliki", href: "/files" },
     { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: Users, label: "Zespół", href: "/team" },
+    { icon: UserPlus, label: "Zaproszenia", href: "/invitations" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
