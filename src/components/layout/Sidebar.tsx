@@ -20,6 +20,7 @@ import {
   UserPlus,
   Clock,
   FileCheck,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -30,7 +31,9 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isTeamMember, signOut, profile } = useAuthContext();
+  const { isTeamMember, signOut, profile, role } = useAuthContext();
+
+  const isAdmin = role === "admin";
 
   const clientNav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -56,6 +59,7 @@ const Sidebar = () => {
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
+    ...(isAdmin ? [{ icon: Shield, label: "Panel Admina", href: "/admin" }] : []),
   ];
 
   const navItems = isTeamMember ? teamNav : clientNav;

@@ -6,10 +6,11 @@ import { Loader2 } from "lucide-react";
 interface ProtectedRouteProps {
   children: ReactNode;
   requireTeamMember?: boolean;
+  requireAdmin?: boolean;
 }
 
-const ProtectedRoute = ({ children, requireTeamMember = false }: ProtectedRouteProps) => {
-  const { user, isLoading, isTeamMember } = useAuthContext();
+const ProtectedRoute = ({ children, requireTeamMember = false, requireAdmin = false }: ProtectedRouteProps) => {
+  const { user, isLoading, isTeamMember, role } = useAuthContext();
   const location = useLocation();
 
   if (isLoading) {
@@ -22,6 +23,10 @@ const ProtectedRoute = ({ children, requireTeamMember = false }: ProtectedRouteP
 
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  if (requireAdmin && role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (requireTeamMember && !isTeamMember) {
