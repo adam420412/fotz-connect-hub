@@ -21,6 +21,7 @@ import {
   MessageSquare,
   PanelRightOpen,
   PanelRightClose,
+  History,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ import { useProjectFiles, formatFileSize, FileStatus, ProjectFile } from "@/hook
 import FileUploadDialog from "@/components/files/FileUploadDialog";
 import FilePreviewDialog from "@/components/files/FilePreviewDialog";
 import FileCommentsPanel from "@/components/files/FileCommentsPanel";
+import FileVersionHistoryDialog from "@/components/files/FileVersionHistoryDialog";
 
 const statusConfig: Record<FileStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   draft: { label: "Roboczy", variant: "secondary" },
@@ -73,6 +75,7 @@ const Files = () => {
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
   const [selectedFileForComments, setSelectedFileForComments] = useState<ProjectFile | null>(null);
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
+  const [versionHistoryFile, setVersionHistoryFile] = useState<ProjectFile | null>(null);
 
   const {
     files,
@@ -101,6 +104,10 @@ const Files = () => {
   const handleOpenComments = (file: ProjectFile) => {
     setSelectedFileForComments(file);
     setCommentsPanelOpen(true);
+  };
+
+  const handleOpenVersionHistory = (file: ProjectFile) => {
+    setVersionHistoryFile(file);
   };
 
   return (
@@ -211,6 +218,10 @@ const Files = () => {
                         <DropdownMenuItem onClick={() => handleOpenComments(file)}>
                           <MessageSquare className="mr-2 h-4 w-4" />
                           Komentarze
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenVersionHistory(file)}>
+                          <History className="mr-2 h-4 w-4" />
+                          Historia wersji
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadFile(file)}>
                           <Download className="mr-2 h-4 w-4" />
@@ -385,6 +396,12 @@ const Files = () => {
         onApprove={handleApprove}
         onReject={handleReject}
         onDownload={downloadFile}
+      />
+
+      <FileVersionHistoryDialog
+        file={versionHistoryFile}
+        open={!!versionHistoryFile}
+        onOpenChange={(open) => !open && setVersionHistoryFile(null)}
       />
     </DashboardLayout>
   );
