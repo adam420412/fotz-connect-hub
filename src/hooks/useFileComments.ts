@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export interface FileComment {
   id: string;
@@ -102,9 +103,14 @@ export const useFileComments = (fileId: string | null) => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["file-comments", fileId] });
       toast.success("Komentarz został dodany");
+      logActivity("comment_add", "comment", data.id, null, {
+        file_id: fileId,
+        author_name: variables.authorName,
+        author_role: variables.authorRole,
+      });
     },
     onError: () => {
       toast.error("Błąd podczas dodawania komentarza");
@@ -120,9 +126,12 @@ export const useFileComments = (fileId: string | null) => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, commentId) => {
       queryClient.invalidateQueries({ queryKey: ["file-comments", fileId] });
       toast.success("Komentarz został usunięty");
+      logActivity("comment_delete", "comment", commentId, null, {
+        file_id: fileId,
+      });
     },
     onError: () => {
       toast.error("Błąd podczas usuwania komentarza");

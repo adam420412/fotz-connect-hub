@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export interface FileFolder {
   id: string;
@@ -55,11 +56,15 @@ export function useFileFolders() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["file-folders"] });
       toast({
         title: "Folder utworzony",
         description: "Nowy folder został dodany",
+      });
+      logActivity("folder_create", "folder", data.id, variables.name, {
+        event_date: variables.eventDate,
+        client_id: variables.clientId,
       });
     },
   });
@@ -73,11 +78,12 @@ export function useFileFolders() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, folderId) => {
       queryClient.invalidateQueries({ queryKey: ["file-folders"] });
       toast({
         title: "Folder usunięty",
       });
+      logActivity("folder_delete", "folder", folderId);
     },
   });
 
@@ -90,10 +96,13 @@ export function useFileFolders() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["project-files"] });
       toast({
         title: "Plik przeniesiony",
+      });
+      logActivity("folder_assign_file", "file", variables.fileId, null, {
+        folder_id: variables.folderId,
       });
     },
   });

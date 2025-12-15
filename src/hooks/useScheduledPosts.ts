@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export interface ScheduledPost {
   id: string;
@@ -63,9 +64,14 @@ export const useScheduledPosts = (clientFilter?: string | null) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
       toast.success("Post został zaplanowany");
+      logActivity("post_schedule", "post", data.id, variables.title, {
+        platform: variables.platform,
+        scheduled_date: variables.scheduled_date,
+        client_name: variables.client_name,
+      });
     },
     onError: () => {
       toast.error("Błąd podczas planowania posta");
@@ -84,9 +90,12 @@ export const useScheduledPosts = (clientFilter?: string | null) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
       toast.success("Post został zaktualizowany");
+      logActivity("post_update", "post", variables.id, data.title, {
+        updated_fields: Object.keys(variables).filter(k => k !== 'id'),
+      });
     },
     onError: () => {
       toast.error("Błąd podczas aktualizacji posta");
@@ -102,9 +111,10 @@ export const useScheduledPosts = (clientFilter?: string | null) => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
       toast.success("Post został usunięty");
+      logActivity("post_delete", "post", id);
     },
     onError: () => {
       toast.error("Błąd podczas usuwania posta");

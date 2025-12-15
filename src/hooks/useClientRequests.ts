@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export interface ClientRequest {
   id: string;
@@ -57,11 +58,15 @@ export function useClientRequests() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["client-requests"] });
       toast({
         title: "Zadanie wysłane",
         description: "Zespół otrzyma powiadomienie o Twoim zadaniu",
+      });
+      logActivity("request_create", "request", data.id, variables.title, {
+        request_type: variables.request_type,
+        priority: variables.priority || "normal",
       });
     },
     onError: (error: any) => {
@@ -82,11 +87,14 @@ export function useClientRequests() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["client-requests"] });
       toast({
         title: "Zaktualizowano",
         description: "Status zadania został zmieniony",
+      });
+      logActivity("request_update", "request", variables.id, null, {
+        updated_fields: Object.keys(variables).filter(k => k !== 'id'),
       });
     },
   });
