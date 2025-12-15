@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { CategoryManagement } from "@/components/settings/CategoryManagement";
 import {
   User,
   Bell,
@@ -16,11 +18,16 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
+  Tag,
+  Sun,
+  Moon,
+  Monitor,
+  Command,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const Settings = () => {
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [slackWebhook, setSlackWebhook] = useState("");
   const [slackConnected, setSlackConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -35,7 +42,6 @@ const Settings = () => {
   });
 
   const [appearance, setAppearance] = useState({
-    darkMode: false,
     compactView: false,
   });
 
@@ -52,7 +58,6 @@ const Settings = () => {
     setIsConnecting(true);
     
     try {
-      // Test webhook by sending a test message
       await fetch(slackWebhook, {
         method: "POST",
         mode: "no-cors",
@@ -135,6 +140,109 @@ const Settings = () => {
               </div>
             </div>
             <Button variant="gradient">Zapisz zmiany</Button>
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Appearance */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+              <Palette className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Wygląd</h2>
+              <p className="text-sm text-muted-foreground">Dostosuj interfejs</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-6 space-y-6">
+            {/* Theme Selection */}
+            <div className="space-y-3">
+              <Label className="text-foreground">Motyw</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => setTheme("light")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                    theme === "light"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <Sun className="h-6 w-6" />
+                  <span className="text-sm font-medium">Jasny</span>
+                </button>
+                <button
+                  onClick={() => setTheme("dark")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                    theme === "dark"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <Moon className="h-6 w-6" />
+                  <span className="text-sm font-medium">Ciemny</span>
+                </button>
+                <button
+                  onClick={() => setTheme("system")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                    theme === "system"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <Monitor className="h-6 w-6" />
+                  <span className="text-sm font-medium">Systemowy</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Keyboard Shortcut Info */}
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3">
+                <Command className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Wyszukiwarka globalna</p>
+                  <p className="text-xs text-muted-foreground">Szybkie wyszukiwanie w całym systemie</p>
+                </div>
+              </div>
+              <kbd className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-background border border-border rounded">
+                ⌘K
+              </kbd>
+            </div>
+
+            {/* Compact View */}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="compact" className="font-normal text-foreground">Widok kompaktowy</Label>
+                <p className="text-sm text-muted-foreground">Zmniejsz odstępy</p>
+              </div>
+              <Switch
+                id="compact"
+                checked={appearance.compactView}
+                onCheckedChange={(checked) =>
+                  setAppearance((prev) => ({ ...prev, compactView: checked }))
+                }
+              />
+            </div>
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Categories Management */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+              <Tag className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Kategorie zadań</h2>
+              <p className="text-sm text-muted-foreground">Zarządzaj kategoriami i tagami</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-6">
+            <CategoryManagement />
           </div>
         </section>
 
@@ -300,51 +408,6 @@ const Settings = () => {
                   checked={notifications.emailComments}
                   onCheckedChange={(checked) =>
                     setNotifications((prev) => ({ ...prev, emailComments: checked }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Appearance */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-              <Palette className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Wygląd</h2>
-              <p className="text-sm text-muted-foreground">Dostosuj interfejs</p>
-            </div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="dark-mode" className="font-normal text-foreground">Tryb ciemny</Label>
-                  <p className="text-sm text-muted-foreground">Włącz ciemny motyw</p>
-                </div>
-                <Switch
-                  id="dark-mode"
-                  checked={appearance.darkMode}
-                  onCheckedChange={(checked) =>
-                    setAppearance((prev) => ({ ...prev, darkMode: checked }))
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="compact" className="font-normal text-foreground">Widok kompaktowy</Label>
-                  <p className="text-sm text-muted-foreground">Zmniejsz odstępy</p>
-                </div>
-                <Switch
-                  id="compact"
-                  checked={appearance.compactView}
-                  onCheckedChange={(checked) =>
-                    setAppearance((prev) => ({ ...prev, compactView: checked }))
                   }
                 />
               </div>

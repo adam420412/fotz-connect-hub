@@ -1,6 +1,5 @@
-import { Bell, Search, Plus } from "lucide-react";
+import { Bell, Search, Plus, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface HeaderProps {
   title?: string;
@@ -24,6 +24,15 @@ const Header = ({
   onNewClick,
   newButtonLabel = "Nowe zadanie",
 }: HeaderProps) => {
+  const openCommandPalette = () => {
+    const event = new KeyboardEvent("keydown", {
+      key: "k",
+      metaKey: true,
+      bubbles: true,
+    });
+    document.dispatchEvent(event);
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-lg">
       <div className="flex items-center gap-4">
@@ -31,14 +40,18 @@ const Header = ({
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Szukaj..."
-            className="w-64 bg-secondary/50 pl-9 focus:bg-secondary"
-          />
-        </div>
+        {/* Search Button */}
+        <Button
+          variant="outline"
+          className="hidden md:flex items-center gap-2 text-muted-foreground hover:text-foreground w-64 justify-start"
+          onClick={openCommandPalette}
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left">Szukaj...</span>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <Command className="h-3 w-3" />K
+          </kbd>
+        </Button>
 
         {/* New Button */}
         {showNewButton && (
@@ -47,6 +60,9 @@ const Header = ({
             {newButtonLabel}
           </Button>
         )}
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Notifications */}
         <DropdownMenu>
@@ -58,7 +74,7 @@ const Header = ({
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align="end" className="w-80 bg-popover">
             <DropdownMenuLabel>Powiadomienia</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="flex flex-col items-start gap-1 p-3">
@@ -94,7 +110,7 @@ const Header = ({
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 bg-popover">
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <span>Jan Kowalski</span>
