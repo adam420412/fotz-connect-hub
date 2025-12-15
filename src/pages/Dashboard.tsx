@@ -17,6 +17,7 @@ import {
   FileBox,
   AlertCircle,
   Loader2,
+  ListTodo,
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -82,7 +83,7 @@ const Dashboard = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { runningEntry, todayTotal } = useTimeTracking();
   const { files } = useProjectFiles();
-  const { requests } = useClientRequests();
+  const { requests, stats: requestStats } = useClientRequests();
 
   const displayName = isTeamMember 
     ? profile?.full_name || "Zespół"
@@ -95,12 +96,36 @@ const Dashboard = () => {
   const pendingRequests = requests.filter(r => r.status === "pending" || r.status === "in_progress");
 
   // Dynamic stats based on real data
-  const dynamicStats = [
+  const dynamicStats = isTeamMember ? [
     {
-      title: isTeamMember ? "Aktywne zadania" : "Aktywne projekty",
+      title: "Oczekujące",
+      value: requestStats.pending,
+      icon: Clock,
+      description: "Zadania do podjęcia",
+    },
+    {
+      title: "W realizacji",
+      value: requestStats.in_progress,
+      icon: FolderKanban,
+      description: "Aktywne zadania",
+    },
+    {
+      title: "Ukończone",
+      value: requestStats.completed,
+      icon: CheckSquare,
+      description: "Zakończone zadania",
+    },
+    {
+      title: "Czas dzisiaj",
+      value: formatDuration(todayTotal),
+      icon: Timer,
+      description: runningEntry ? "Timer aktywny" : undefined,
+    },
+  ] : [
+    {
+      title: "Aktywne projekty",
       value: stats?.activeRequests || 0,
       icon: FolderKanban,
-      description: isTeamMember ? "W realizacji" : undefined,
     },
     {
       title: "Do akceptacji",
@@ -109,10 +134,9 @@ const Dashboard = () => {
       description: "Pliki oczekujące",
     },
     {
-      title: isTeamMember ? "Czas dzisiaj" : "Zadania w toku",
-      value: isTeamMember ? formatDuration(todayTotal) : pendingRequests.length,
-      icon: isTeamMember ? Clock : CheckSquare,
-      description: isTeamMember && runningEntry ? "Timer aktywny" : undefined,
+      title: "Zadania w toku",
+      value: pendingRequests.length,
+      icon: CheckSquare,
     },
     {
       title: "Ukończone",

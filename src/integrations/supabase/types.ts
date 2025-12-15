@@ -55,6 +55,7 @@ export type Database = {
       }
       client_requests: {
         Row: {
+          assigned_to: string | null
           client_id: string
           created_at: string
           description: string | null
@@ -67,6 +68,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           client_id: string
           created_at?: string
           description?: string | null
@@ -79,6 +81,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           client_id?: string
           created_at?: string
           description?: string | null
@@ -91,6 +94,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "client_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "client_requests_related_file_id_fkey"
             columns: ["related_file_id"]

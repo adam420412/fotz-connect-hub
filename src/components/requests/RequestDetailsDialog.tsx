@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Clock,
   User,
@@ -28,8 +29,10 @@ import {
   CheckSquare,
   MessageSquare,
   Send,
+  UserPlus,
 } from "lucide-react";
 import { ClientRequest } from "@/hooks/useClientRequests";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -41,6 +44,7 @@ interface RequestDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange: (id: string, status: ClientRequest["status"]) => void;
+  onAssign?: (id: string, assignedTo: string | null) => void;
   isTeamMember?: boolean;
 }
 
@@ -76,16 +80,20 @@ const RequestDetailsDialog = ({
   open,
   onOpenChange,
   onStatusChange,
+  onAssign,
   isTeamMember = false,
 }: RequestDetailsDialogProps) => {
   const [newStatus, setNewStatus] = useState<ClientRequest["status"]>("pending");
+  const [newAssignee, setNewAssignee] = useState<string>("");
   const [attachments, setAttachments] = useState<ParsedAttachment[]>([]);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [briefSections, setBriefSections] = useState<{ question: string; answer: string }[]>([]);
+  const { teamMembers } = useTeamMembers();
 
   useEffect(() => {
     if (request) {
       setNewStatus(request.status);
+      setNewAssignee(request.assigned_to || "unassigned");
       parseDescription(request.description);
     }
   }, [request]);
@@ -190,6 +198,15 @@ const RequestDetailsDialog = ({
     }
   };
 
+  const handleAssigneeUpdate = () => {
+    if (request && onAssign) {
+      const assignedTo = newAssignee === "unassigned" ? null : newAssignee;
+      if (assignedTo !== request.assigned_to) {
+        onAssign(request.id, assignedTo);
+      }
+    }
+  };
+
   if (!request) return null;
 
   const typeConfig = requestTypeConfig[request.request_type] || requestTypeConfig.other;
@@ -219,34 +236,93 @@ const RequestDetailsDialog = ({
             </span>
           </div>
 
-          {/* Status Change (Team Only) */}
+          {/* Status & Assignment (Team Only) */}
           {isTeamMember && (
             <>
               <Separator />
-              <div className="flex items-end gap-4">
-                <div className="flex-1 space-y-2">
-                  <Label>Zmień status</Label>
-                  <Select value={newStatus} onValueChange={(v) => setNewStatus(v as ClientRequest["status"])}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(statusConfig).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>
-                          {config.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Status Change */}
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <div className="flex gap-2">
+                    <Select value={newStatus} onValueChange={(v) => setNewStatus(v as ClientRequest["status"])}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(statusConfig).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            {config.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={handleStatusUpdate}
+                      disabled={newStatus === request.status}
+                    >
+                      Zapisz
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="gradient"
-                  onClick={handleStatusUpdate}
-                  disabled={newStatus === request.status}
-                >
-                  Zapisz status
-                </Button>
+
+                {/* Assignment */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Przypisz do
+                  </Label>
+                  <div className="flex gap-2">
+                    <Select value={newAssignee} onValueChange={setNewAssignee}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Wybierz osobę" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">
+                          <span className="text-muted-foreground">Nieprzypisane</span>
+                        </SelectItem>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            <span className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-xs">
+                                  {member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {member.name}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={handleAssigneeUpdate}
+                      disabled={newAssignee === (request.assigned_to || "unassigned")}
+                    >
+                      Zapisz
+                    </Button>
+                  </div>
+                </div>
               </div>
+
+              {/* Current Assignee Display */}
+              {request.assigned_member && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {request.assigned_member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Przypisane do: {request.assigned_member.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{request.assigned_member.email}</p>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

@@ -12,8 +12,16 @@ export interface ClientRequest {
   related_file_id: string | null;
   status: "pending" | "in_progress" | "completed" | "cancelled";
   priority: "low" | "normal" | "high" | "urgent";
+  assigned_to: string | null;
   created_at: string;
   updated_at: string;
+  // Joined data
+  assigned_member?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar_url: string | null;
+  } | null;
 }
 
 export interface CreateRequestData {
@@ -22,6 +30,14 @@ export interface CreateRequestData {
   request_type: "task" | "feedback" | "comment" | "other";
   related_file_id?: string;
   priority?: "low" | "normal" | "high" | "urgent";
+}
+
+export interface RequestStats {
+  pending: number;
+  in_progress: number;
+  completed: number;
+  cancelled: number;
+  total: number;
 }
 
 export function useClientRequests() {
@@ -33,13 +49,30 @@ export function useClientRequests() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_requests")
-        .select("*")
+        .select(`
+          *,
+          assigned_member:team_members!client_requests_assigned_to_fkey(
+            id,
+            name,
+            email,
+            avatar_url
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as ClientRequest[];
     },
   });
+
+  // Calculate stats
+  const stats: RequestStats = {
+    pending: requests.filter((r) => r.status === "pending").length,
+    in_progress: requests.filter((r) => r.status === "in_progress").length,
+    completed: requests.filter((r) => r.status === "completed").length,
+    cancelled: requests.filter((r) => r.status === "cancelled").length,
+    total: requests.length,
+  };
 
   const createRequest = useMutation({
     mutationFn: async (requestData: CreateRequestData) => {
@@ -91,7 +124,7 @@ export function useClientRequests() {
       queryClient.invalidateQueries({ queryKey: ["client-requests"] });
       toast({
         title: "Zaktualizowano",
-        description: "Status zadania został zmieniony",
+        description: "Zadanie zostało zaktualizowane",
       });
       logActivity("request_update", "request", variables.id, null, {
         updated_fields: Object.keys(variables).filter(k => k !== 'id'),
@@ -101,6 +134,7 @@ export function useClientRequests() {
 
   return {
     requests,
+    stats,
     isLoading,
     createRequest: createRequest.mutate,
     updateRequest: updateRequest.mutate,
