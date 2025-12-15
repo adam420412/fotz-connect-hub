@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ import {
   ArrowUpDown,
   SortAsc,
   SortDesc,
+  User,
 } from "lucide-react";
 import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
@@ -164,7 +166,10 @@ const NewRequest = () => {
 
   const handleStatusChange = (id: string, status: ClientRequest["status"]) => {
     updateRequest({ id, status });
-    setIsDetailsOpen(false);
+  };
+
+  const handleAssign = (id: string, assignedTo: string | null) => {
+    updateRequest({ id, assigned_to: assignedTo });
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -301,13 +306,23 @@ const NewRequest = () => {
                         {request.description.split("\n")[0]}
                       </p>
                     )}
-                    <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center gap-3 text-sm flex-wrap">
                       <Badge variant={statusConfig[request.status].variant}>
                         {statusConfig[request.status].label}
                       </Badge>
                       <span className={priorityConfig[request.priority].className}>
                         {priorityConfig[request.priority].label}
                       </span>
+                      {request.assigned_member && (
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <Avatar className="h-5 w-5">
+                            <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                              {request.assigned_member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {request.assigned_member.name}
+                        </span>
+                      )}
                       <span className="text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {format(new Date(request.created_at), "d MMM yyyy, HH:mm", { locale: pl })}
@@ -338,6 +353,7 @@ const NewRequest = () => {
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         onStatusChange={handleStatusChange}
+        onAssign={handleAssign}
         isTeamMember={isTeamMember}
       />
 
