@@ -17,6 +17,7 @@ import {
   MoreVertical,
   Grid,
   List,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -24,79 +25,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type FileStatus = "draft" | "pending_approval" | "approved" | "rejected";
-
-interface FileItem {
-  id: string;
-  name: string;
-  type: "image" | "video" | "document";
-  size: string;
-  project: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  status: FileStatus;
-  version: number;
-  thumbnail?: string;
-}
-
-const mockFiles: FileItem[] = [
-  {
-    id: "1",
-    name: "Logo_final_v3.ai",
-    type: "image",
-    size: "2.4 MB",
-    project: "Rebranding Klient ABC",
-    uploadedBy: "Anna K.",
-    uploadedAt: "2 godz. temu",
-    status: "approved",
-    version: 3,
-  },
-  {
-    id: "2",
-    name: "Mockup_strona_glowna.fig",
-    type: "image",
-    size: "8.1 MB",
-    project: "Strona WWW - XYZ Corp",
-    uploadedBy: "Piotr N.",
-    uploadedAt: "3 godz. temu",
-    status: "pending_approval",
-    version: 2,
-  },
-  {
-    id: "3",
-    name: "Video_promo_30s.mp4",
-    type: "video",
-    size: "45.2 MB",
-    project: "Kampania Social Media",
-    uploadedBy: "Tomek W.",
-    uploadedAt: "1 dzień temu",
-    status: "pending_approval",
-    version: 1,
-  },
-  {
-    id: "4",
-    name: "Strategia_marketingowa.pdf",
-    type: "document",
-    size: "1.2 MB",
-    project: "Rebranding Klient ABC",
-    uploadedBy: "Michał P.",
-    uploadedAt: "2 dni temu",
-    status: "approved",
-    version: 1,
-  },
-  {
-    id: "5",
-    name: "Wizytowki_projekt.pdf",
-    type: "document",
-    size: "3.5 MB",
-    project: "Rebranding Klient ABC",
-    uploadedBy: "Ewa S.",
-    uploadedAt: "3 dni temu",
-    status: "rejected",
-    version: 2,
-  },
-];
+import { useProjectFiles, formatFileSize, FileStatus, ProjectFile } from "@/hooks/useProjectFiles";
+import FileUploadDialog from "@/components/files/FileUploadDialog";
+import FilePreviewDialog from "@/components/files/FilePreviewDialog";
 
 const statusConfig: Record<FileStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   draft: { label: "Roboczy", variant: "secondary" },
@@ -116,17 +47,50 @@ const FileIcon = ({ type }: { type: string }) => {
   }
 };
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffHours < 1) return "Przed chwilą";
+  if (diffHours < 24) return `${diffHours} godz. temu`;
+  if (diffDays === 1) return "1 dzień temu";
+  if (diffDays < 7) return `${diffDays} dni temu`;
+  return date.toLocaleDateString("pl-PL");
+};
+
 const Files = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<FileStatus | "all">("all");
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
 
-  const filteredFiles = mockFiles.filter((file) => {
+  const {
+    files,
+    isLoading,
+    uploading,
+    uploadFile,
+    updateStatus,
+    downloadFile,
+  } = useProjectFiles();
+
+  const filteredFiles = files.filter((file) => {
     const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      file.project.toLowerCase().includes(searchQuery.toLowerCase());
+      file.project_id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || file.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleApprove = (fileId: string) => {
+    updateStatus({ fileId, status: "approved" });
+  };
+
+  const handleReject = (fileId: string) => {
+    updateStatus({ fileId, status: "rejected" });
+  };
 
   return (
     <DashboardLayout title="Pliki" userRole="client">
@@ -159,7 +123,11 @@ const Files = () => {
                 <List className="h-4 w-4" />
               </Button>
             </div>
-            <Button variant="gradient" className="gap-2">
+            <Button 
+              variant="gradient" 
+              className="gap-2"
+              onClick={() => setUploadDialogOpen(true)}
+            >
               <Upload className="h-4 w-4" />
               Prześlij plik
             </Button>
@@ -180,16 +148,26 @@ const Files = () => {
           ))}
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
         {/* Files Grid/List */}
-        {viewMode === "grid" ? (
+        {!isLoading && viewMode === "grid" && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredFiles.map((file) => (
               <div
                 key={file.id}
                 className="group rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md"
               >
-                <div className="mb-3 flex aspect-video items-center justify-center rounded-lg bg-muted">
-                  <FileIcon type={file.type} />
+                <div 
+                  className="mb-3 flex aspect-video items-center justify-center rounded-lg bg-muted cursor-pointer"
+                  onClick={() => setPreviewFile(file)}
+                >
+                  <FileIcon type={file.file_type} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -201,31 +179,44 @@ const Files = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPreviewFile(file)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Podgląd
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => downloadFile(file)}>
                           <Download className="mr-2 h-4 w-4" />
                           Pobierz
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <p className="text-sm text-muted-foreground">{file.project}</p>
+                  <p className="text-sm text-muted-foreground">{file.project_id}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(file.file_size)} • {formatDate(file.created_at)}
+                  </p>
                   <div className="flex items-center justify-between">
-                    <Badge variant={statusConfig[file.status].variant}>
-                      {statusConfig[file.status].label}
+                    <Badge variant={statusConfig[file.status as FileStatus].variant}>
+                      {statusConfig[file.status as FileStatus].label}
                     </Badge>
                     <span className="text-xs text-muted-foreground">v{file.version}</span>
                   </div>
                   {file.status === "pending_approval" && (
                     <div className="flex gap-2 pt-2">
-                      <Button size="sm" variant="default" className="flex-1 gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="default" 
+                        className="flex-1 gap-1"
+                        onClick={() => handleApprove(file.id)}
+                      >
                         <Check className="h-3 w-3" />
                         Akceptuj
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1 gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 gap-1"
+                        onClick={() => handleReject(file.id)}
+                      >
                         <X className="h-3 w-3" />
                         Odrzuć
                       </Button>
@@ -235,7 +226,9 @@ const Files = () => {
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {!isLoading && viewMode === "list" && (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full">
               <thead>
@@ -252,28 +245,58 @@ const Files = () => {
                   <tr key={file.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <FileIcon type={file.type} />
+                        <FileIcon type={file.file_type} />
                         <div>
                           <p className="font-medium text-foreground">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">{file.uploadedAt}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(file.created_at)}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">{file.project}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{file.size}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">{file.project_id}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{formatFileSize(file.file_size)}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={statusConfig[file.status].variant}>
-                        {statusConfig[file.status].label}
+                      <Badge variant={statusConfig[file.status as FileStatus].variant}>
+                        {statusConfig[file.status as FileStatus].label}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => setPreviewFile(file)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => downloadFile(file)}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
+                        {file.status === "pending_approval" && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-green-600 hover:text-green-700"
+                              onClick={() => handleApprove(file.id)}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => handleReject(file.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -283,14 +306,46 @@ const Files = () => {
           </div>
         )}
 
-        {filteredFiles.length === 0 && (
+        {!isLoading && filteredFiles.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-foreground">Brak plików</h3>
-            <p className="text-muted-foreground">Nie znaleziono plików pasujących do kryteriów</p>
+            <p className="text-muted-foreground mb-4">
+              {files.length === 0 
+                ? "Prześlij pierwszy plik, aby rozpocząć" 
+                : "Nie znaleziono plików pasujących do kryteriów"
+              }
+            </p>
+            {files.length === 0 && (
+              <Button 
+                variant="gradient" 
+                className="gap-2"
+                onClick={() => setUploadDialogOpen(true)}
+              >
+                <Upload className="h-4 w-4" />
+                Prześlij plik
+              </Button>
+            )}
           </div>
         )}
       </div>
+
+      {/* Dialogs */}
+      <FileUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onUpload={uploadFile}
+        uploading={uploading}
+      />
+
+      <FilePreviewDialog
+        file={previewFile}
+        open={!!previewFile}
+        onOpenChange={(open) => !open && setPreviewFile(null)}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onDownload={downloadFile}
+      />
     </DashboardLayout>
   );
 };
