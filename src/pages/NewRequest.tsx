@@ -2,7 +2,6 @@ import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,11 +26,15 @@ import {
   Send,
   Clock,
   Loader2,
+  ClipboardList,
 } from "lucide-react";
-import { useClientRequests, ClientRequest, CreateRequestData } from "@/hooks/useClientRequests";
+import { useClientRequests, CreateRequestData } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { briefConfigs, formatBriefAnswers } from "@/components/requests/briefConfig";
+import BriefQuiz from "@/components/requests/BriefQuiz";
+import BriefSummary from "@/components/requests/BriefSummary";
 
 const requestTypeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
   task: { label: "Nowe zadanie", icon: <CheckSquare className="h-4 w-4" /> },
@@ -54,32 +57,47 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
   urgent: { label: "Pilny", className: "text-destructive" },
 };
 
+type DialogStep = "type_select" | "brief_quiz" | "summary";
+
 const NewRequest = () => {
   const { requests, isLoading, createRequest, isCreating } = useClientRequests();
   const { files } = useProjectFiles();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogStep, setDialogStep] = useState<DialogStep>("type_select");
 
   // Form state
   const [formType, setFormType] = useState<CreateRequestData["request_type"]>("task");
   const [formTitle, setFormTitle] = useState("");
-  const [formDescription, setFormDescription] = useState("");
   const [formPriority, setFormPriority] = useState<CreateRequestData["priority"]>("normal");
   const [formFileId, setFormFileId] = useState<string>("");
+  const [briefAnswers, setBriefAnswers] = useState<Record<string, string>>({});
 
   const resetForm = () => {
     setFormType("task");
     setFormTitle("");
-    setFormDescription("");
     setFormPriority("normal");
     setFormFileId("");
+    setBriefAnswers({});
+    setDialogStep("type_select");
+  };
+
+  const handleStartBrief = () => {
+    if (!formTitle.trim()) return;
+    setDialogStep("brief_quiz");
+  };
+
+  const handleBriefComplete = () => {
+    setDialogStep("summary");
   };
 
   const handleSubmit = () => {
     if (!formTitle.trim()) return;
 
+    const formattedBrief = formatBriefAnswers(formType, briefAnswers);
+
     const data: CreateRequestData = {
       title: formTitle.trim(),
-      description: formDescription.trim() || undefined,
+      description: formattedBrief || undefined,
       request_type: formType,
       priority: formPriority,
       related_file_id: formFileId || undefined,
@@ -88,6 +106,13 @@ const NewRequest = () => {
     createRequest(data);
     setIsDialogOpen(false);
     resetForm();
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      resetForm();
+    }
+    setIsDialogOpen(open);
   };
 
   return (
@@ -165,107 +190,126 @@ const NewRequest = () => {
       </div>
 
       {/* Create Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Wyślij zadanie do zespołu</DialogTitle>
-            <DialogDescription>
-              Opisz czego potrzebujesz, a zespół zajmie się realizacją
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          {dialogStep === "type_select" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5" />
+                  Wyślij zadanie do zespołu
+                </DialogTitle>
+                <DialogDescription>
+                  Wybierz typ zadania i uzupełnij brief, aby zespół dokładnie wiedział co zrobić
+                </DialogDescription>
+              </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Typ</Label>
-                <Select value={formType} onValueChange={(v) => setFormType(v as CreateRequestData["request_type"])}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(requestTypeConfig).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-2">
-                          {config.icon}
-                          {config.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Typ zadania</Label>
+                    <Select value={formType} onValueChange={(v) => setFormType(v as CreateRequestData["request_type"])}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(requestTypeConfig).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            <span className="flex items-center gap-2">
+                              {config.icon}
+                              {config.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Priorytet</Label>
+                    <Select value={formPriority} onValueChange={(v) => setFormPriority(v as CreateRequestData["priority"])}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(priorityConfig).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            <span className={config.className}>{config.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tytuł zadania</Label>
+                  <Input
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    placeholder="Krótki, opisowy tytuł"
+                  />
+                </div>
+
+                {(formType === "comment" || formType === "feedback") && files.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Powiązany plik (opcjonalne)</Label>
+                    <Select value={formFileId} onValueChange={setFormFileId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Wybierz plik" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Brak</SelectItem>
+                        {files.map((file) => (
+                          <SelectItem key={file.id} value={file.id}>
+                            {file.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Anuluj
+                  </Button>
+                  <Button
+                    variant="gradient"
+                    onClick={handleStartBrief}
+                    disabled={!formTitle.trim()}
+                    className="gap-2"
+                  >
+                    Dalej do briefu
+                    <ClipboardList className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+            </>
+          )}
 
-              <div className="space-y-2">
-                <Label>Priorytet</Label>
-                <Select value={formPriority} onValueChange={(v) => setFormPriority(v as CreateRequestData["priority"])}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(priorityConfig).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className={config.className}>{config.label}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          {dialogStep === "brief_quiz" && briefConfigs[formType] && (
+            <BriefQuiz
+              config={briefConfigs[formType]}
+              answers={briefAnswers}
+              onAnswersChange={setBriefAnswers}
+              onComplete={handleBriefComplete}
+              onBack={() => setDialogStep("type_select")}
+            />
+          )}
 
-            <div className="space-y-2">
-              <Label>Tytuł</Label>
-              <Input
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Krótki opis zadania"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Szczegóły (opcjonalne)</Label>
-              <Textarea
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Dodatkowe informacje, oczekiwania, termin..."
-                className="min-h-[100px]"
-              />
-            </div>
-
-            {(formType === "comment" || formType === "feedback") && files.length > 0 && (
-              <div className="space-y-2">
-                <Label>Powiązany plik (opcjonalne)</Label>
-                <Select value={formFileId} onValueChange={setFormFileId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wybierz plik" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Brak</SelectItem>
-                    {files.map((file) => (
-                      <SelectItem key={file.id} value={file.id}>
-                        {file.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Anuluj
-              </Button>
-              <Button
-                variant="gradient"
-                onClick={handleSubmit}
-                disabled={!formTitle.trim() || isCreating}
-                className="gap-2"
-              >
-                {isCreating && <Loader2 className="h-4 w-4 animate-spin" />}
-                <Send className="h-4 w-4" />
-                Wyślij
-              </Button>
-            </div>
-          </div>
+          {dialogStep === "summary" && briefConfigs[formType] && (
+            <BriefSummary
+              config={briefConfigs[formType]}
+              answers={briefAnswers}
+              title={formTitle}
+              priority={formPriority}
+              isSubmitting={isCreating}
+              onEdit={() => setDialogStep("brief_quiz")}
+              onSubmit={handleSubmit}
+              onBack={() => setDialogStep("brief_quiz")}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </DashboardLayout>
