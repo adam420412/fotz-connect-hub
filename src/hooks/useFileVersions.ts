@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProjectFile } from "./useProjectFiles";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export const useFileVersions = (fileId: string | null) => {
   const queryClient = useQueryClient();
@@ -133,10 +134,14 @@ export const useFileVersions = (fileId: string | null) => {
       if (dbError) throw dbError;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["file-versions", fileId] });
       queryClient.invalidateQueries({ queryKey: ["project-files"] });
       toast.success("Nowa wersja została przesłana");
+      logActivity("file_version_upload", "file", data.id, variables.file.name, {
+        version: data.version,
+        parent_file_id: variables.currentFile.id,
+      });
     },
     onError: (error) => {
       console.error("Upload error:", error);
@@ -197,10 +202,14 @@ export const useFileVersions = (fileId: string | null) => {
       if (dbError) throw dbError;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["file-versions", fileId] });
       queryClient.invalidateQueries({ queryKey: ["project-files"] });
       toast.success("Wersja została przywrócona jako nowa wersja");
+      logActivity("file_version_restore", "file", data.id, variables.versionToRestore.name, {
+        restored_version: variables.versionToRestore.version,
+        new_version: data.version,
+      });
     },
     onError: (error) => {
       console.error("Restore error:", error);

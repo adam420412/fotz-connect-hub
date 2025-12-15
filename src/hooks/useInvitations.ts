@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 interface Invitation {
   id: string;
@@ -58,11 +59,15 @@ export function useInvitations() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       toast({
         title: "Zaproszenie wysłane",
         description: "Link rejestracyjny został wygenerowany",
+      });
+      logActivity("invitation_create", "invitation", data.id, variables.email, {
+        role: variables.role,
+        company_name: variables.companyName,
       });
     },
     onError: (error: any) => {

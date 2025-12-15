@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export interface TimeEntry {
   id: string;
@@ -82,12 +83,16 @@ export function useTimeTracking() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["running-time-entry"] });
       toast({
         title: "Timer uruchomiony",
         description: "Śledzenie czasu rozpoczęte",
+      });
+      logActivity("timer_start", "time_entry", data.id, null, {
+        project_id: variables.projectId,
+        description: variables.description,
       });
     },
   });
@@ -117,13 +122,14 @@ export function useTimeTracking() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, entryId) => {
       queryClient.invalidateQueries({ queryKey: ["time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["running-time-entry"] });
       toast({
         title: "Timer zatrzymany",
         description: "Czas pracy został zapisany",
       });
+      logActivity("timer_stop", "time_entry", entryId);
     },
   });
 
@@ -136,11 +142,12 @@ export function useTimeTracking() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, entryId) => {
       queryClient.invalidateQueries({ queryKey: ["time-entries"] });
       toast({
         title: "Wpis usunięty",
       });
+      logActivity("time_entry_delete", "time_entry", entryId);
     },
   });
 

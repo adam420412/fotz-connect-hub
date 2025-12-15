@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export type FileStatus = "draft" | "pending_approval" | "approved" | "rejected";
 
@@ -93,9 +94,14 @@ export const useProjectFiles = () => {
         setUploading(false);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["project-files"] });
       toast.success("Plik został przesłany");
+      logActivity("file_upload", "file", data.id, variables.file.name, {
+        project_id: variables.projectId,
+        file_size: variables.file.size,
+        file_type: data.file_type,
+      });
     },
     onError: (error) => {
       console.error("Upload error:", error);
@@ -115,7 +121,7 @@ export const useProjectFiles = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["project-files"] });
       const statusMessages: Record<FileStatus, string> = {
         approved: "Plik został zaakceptowany",
@@ -124,6 +130,9 @@ export const useProjectFiles = () => {
         draft: "Plik zapisany jako roboczy",
       };
       toast.success(statusMessages[variables.status]);
+      logActivity("file_status_change", "file", variables.fileId, data.name, {
+        new_status: variables.status,
+      });
     },
     onError: () => {
       toast.error("Błąd podczas aktualizacji statusu");

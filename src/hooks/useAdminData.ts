@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppRole } from "@/hooks/useAuth";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 interface UserWithRole {
   id: string;
@@ -184,26 +185,6 @@ export function useAdminData() {
       description: "Opiekun został przypisany",
     });
     return true;
-  };
-
-  const logActivity = async (
-    actionType: string,
-    entityType: string,
-    entityId?: string | null,
-    entityName?: string | null,
-    details?: Record<string, any>
-  ) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    await supabase.from("activity_logs").insert({
-      user_id: user?.id,
-      user_email: user?.email,
-      action_type: actionType,
-      entity_type: entityType,
-      entity_id: entityId,
-      entity_name: entityName,
-      details: details || null,
-    });
   };
 
   useEffect(() => {
