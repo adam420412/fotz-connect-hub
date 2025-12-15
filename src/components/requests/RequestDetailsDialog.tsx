@@ -40,9 +40,11 @@ import {
   CalendarIcon,
   AlertTriangle,
   X,
+  Tag,
 } from "lucide-react";
 import { ClientRequest } from "@/hooks/useClientRequests";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useTaskCategories } from "@/hooks/useTaskCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -57,6 +59,7 @@ interface RequestDetailsDialogProps {
   onStatusChange: (id: string, status: ClientRequest["status"]) => void;
   onAssign?: (id: string, assignedTo: string | null) => void;
   onDeadlineChange?: (id: string, deadline: string | null) => void;
+  onCategoryChange?: (id: string, categoryId: string | null) => void;
   isTeamMember?: boolean;
 }
 
@@ -117,21 +120,25 @@ const RequestDetailsDialog = ({
   onStatusChange,
   onAssign,
   onDeadlineChange,
+  onCategoryChange,
   isTeamMember = false,
 }: RequestDetailsDialogProps) => {
   const [newStatus, setNewStatus] = useState<ClientRequest["status"]>("pending");
   const [newAssignee, setNewAssignee] = useState<string>("");
   const [newDeadline, setNewDeadline] = useState<Date | undefined>(undefined);
+  const [newCategory, setNewCategory] = useState<string>("");
   const [attachments, setAttachments] = useState<ParsedAttachment[]>([]);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [briefSections, setBriefSections] = useState<{ question: string; answer: string }[]>([]);
   const { teamMembers } = useTeamMembers();
+  const { categories } = useTaskCategories();
 
   useEffect(() => {
     if (request) {
       setNewStatus(request.status);
       setNewAssignee(request.assigned_to || "unassigned");
       setNewDeadline(request.deadline ? new Date(request.deadline) : undefined);
+      setNewCategory(request.category_id || "none");
       parseDescription(request.description);
     }
   }, [request]);
@@ -253,6 +260,13 @@ const RequestDetailsDialog = ({
     }
   };
 
+  const handleCategoryUpdate = (categoryId: string) => {
+    setNewCategory(categoryId);
+    if (request && onCategoryChange) {
+      onCategoryChange(request.id, categoryId === "none" ? null : categoryId);
+    }
+  };
+
   if (!request) return null;
 
   const typeConfig = requestTypeConfig[request.request_type] || requestTypeConfig.other;
@@ -286,6 +300,18 @@ const RequestDetailsDialog = ({
                 {deadlineInfo.urgent && <AlertTriangle className="h-3.5 w-3.5" />}
                 <CalendarIcon className="h-3.5 w-3.5" />
                 Termin: {deadlineInfo.text}
+              </span>
+            )}
+            {request.category && (
+              <span 
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
+                style={{ 
+                  backgroundColor: `${request.category.color}20`,
+                  color: request.category.color 
+                }}
+              >
+                <Tag className="h-3 w-3" />
+                {request.category.name}
               </span>
             )}
           </div>
@@ -405,6 +431,35 @@ const RequestDetailsDialog = ({
                       {deadlineInfo.text}
                     </p>
                   )}
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="flex items-center gap-1">
+                    <Tag className="h-3.5 w-3.5" />
+                    Kategoria
+                  </Label>
+                  <Select value={newCategory} onValueChange={handleCategoryUpdate}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz kategorię" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        <span className="text-muted-foreground">Brak kategorii</span>
+                      </SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: cat.color }}
+                            />
+                            {cat.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               </div>

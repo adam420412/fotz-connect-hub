@@ -3,15 +3,19 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ChevronLeft, 
   ChevronRight, 
   AlertTriangle, 
   Calendar as CalendarIcon,
   CalendarDays,
-  CalendarRange
+  CalendarRange,
+  Tag,
+  Filter,
 } from "lucide-react";
 import { ClientRequest } from "@/hooks/useClientRequests";
+import { useTaskCategories, TaskCategory } from "@/hooks/useTaskCategories";
 import {
   format,
   startOfMonth,
@@ -29,13 +33,14 @@ import {
   endOfWeek,
   isToday,
   isPast,
-  eachHourOfInterval,
-  startOfDay,
-  endOfDay,
-  setHours,
 } from "date-fns";
 import { pl } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface RequestCalendarProps {
   requests: ClientRequest[];
@@ -73,6 +78,16 @@ const RequestCalendar = ({
 }: RequestCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>("month");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const { categories } = useTaskCategories();
+
+  // Filter requests by selected categories
+  const filteredRequests = useMemo(() => {
+    if (selectedCategories.length === 0) return requests;
+    return requests.filter((r) => 
+      r.category_id && selectedCategories.includes(r.category_id)
+    );
+  }, [requests, selectedCategories]);
 
   // Get days based on current view
   const calendarDays = useMemo(() => {
@@ -95,15 +110,27 @@ const RequestCalendar = ({
   }, []);
 
   const getRequestsForDay = (day: Date) => {
-    return requests.filter((r) => {
+    return filteredRequests.filter((r) => {
       if (!r.deadline) return false;
       return isSameDay(new Date(r.deadline), day);
     });
   };
 
-  const unscheduledRequests = requests.filter(
+  const unscheduledRequests = filteredRequests.filter(
     (r) => !r.deadline && r.status !== "completed" && r.status !== "cancelled"
   );
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const clearCategoryFilter = () => {
+    setSelectedCategories([]);
+  };
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -147,59 +174,76 @@ const RequestCalendar = ({
   const weekDaysFull = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
 
   // Task Card Component for reuse
-  const TaskCard = ({ request, index, compact = false }: { request: ClientRequest; index: number; compact?: boolean }) => (
-    <Draggable key={request.id} draggableId={request.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={cn(
-            "rounded border cursor-pointer transition-all",
-            priorityColors[request.priority],
-            snapshot.isDragging && "shadow-lg ring-2 ring-primary/30",
-            compact ? "text-xs p-1.5" : "text-sm p-2"
-          )}
-          onClick={() => onRequestClick(request)}
-        >
-          <div className="flex items-center gap-1.5">
-            <div
-              className={cn(
-                "rounded-full flex-shrink-0",
-                statusConfig[request.status].dotColor,
-                compact ? "h-1.5 w-1.5" : "h-2 w-2"
-              )}
-            />
-            <span className="truncate font-medium">{request.title}</span>
-          </div>
-          {!compact && (
-            <>
-              <div className="flex items-center gap-2 mt-1.5 text-xs">
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                  {statusConfig[request.status].label}
-                </Badge>
-                <span className={priorityConfig[request.priority].className}>
-                  {priorityConfig[request.priority].label}
-                </span>
-              </div>
-              {request.assigned_member && (
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <Avatar className="h-4 w-4">
-                    <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
-                      {request.assigned_member.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {request.assigned_member.name}
-                  </span>
+  const TaskCard = ({ request, index, compact = false }: { request: ClientRequest; index: number; compact?: boolean }) => {
+    const categoryColor = request.category?.color || null;
+    
+    return (
+      <Draggable key={request.id} draggableId={request.id} index={index}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            className={cn(
+              "rounded border cursor-pointer transition-all",
+              priorityColors[request.priority],
+              snapshot.isDragging && "shadow-lg ring-2 ring-primary/30",
+              compact ? "text-xs p-1.5" : "text-sm p-2"
+            )}
+            style={{
+              ...provided.draggableProps.style,
+              borderLeftWidth: categoryColor ? "3px" : undefined,
+              borderLeftColor: categoryColor || undefined,
+            }}
+            onClick={() => onRequestClick(request)}
+          >
+            <div className="flex items-center gap-1.5">
+              <div
+                className={cn(
+                  "rounded-full flex-shrink-0",
+                  statusConfig[request.status].dotColor,
+                  compact ? "h-1.5 w-1.5" : "h-2 w-2"
+                )}
+              />
+              <span className="truncate font-medium">{request.title}</span>
+            </div>
+            {!compact && (
+              <>
+                <div className="flex items-center gap-2 mt-1.5 text-xs flex-wrap">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                    {statusConfig[request.status].label}
+                  </Badge>
+                  {request.category && (
+                    <span
+                      className="text-[10px] px-1.5 py-0 rounded-full"
+                      style={{
+                        backgroundColor: `${request.category.color}20`,
+                        color: request.category.color,
+                      }}
+                    >
+                      {request.category.name}
+                    </span>
+                  )}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </Draggable>
-  );
+                {request.assigned_member && (
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Avatar className="h-4 w-4">
+                      <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
+                        {request.assigned_member.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {request.assigned_member.name}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </Draggable>
+    );
+  };
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -219,6 +263,60 @@ const RequestCalendar = ({
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Category Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={selectedCategories.length > 0 ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-8"
+                >
+                  <Tag className="h-4 w-4 mr-1" />
+                  Kategorie
+                  {selectedCategories.length > 0 && (
+                    <Badge variant="default" className="ml-1 h-5 px-1.5">
+                      {selectedCategories.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="end">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">Filtruj po kategorii</h4>
+                    {selectedCategories.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                        onClick={clearCategoryFilter}
+                      >
+                        Wyczyść
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {categories.map((cat) => (
+                      <label
+                        key={cat.id}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded-md transition-colors"
+                      >
+                        <Checkbox
+                          checked={selectedCategories.includes(cat.id)}
+                          onCheckedChange={() => toggleCategory(cat.id)}
+                        />
+                        <span
+                          className="h-3 w-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="text-sm">{cat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <Button variant="outline" size="sm" onClick={goToToday}>
               Dziś
             </Button>

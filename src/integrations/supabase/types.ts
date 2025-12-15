@@ -56,6 +56,7 @@ export type Database = {
       client_requests: {
         Row: {
           assigned_to: string | null
+          category_id: string | null
           client_id: string
           created_at: string
           deadline: string | null
@@ -71,6 +72,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          category_id?: string | null
           client_id: string
           created_at?: string
           deadline?: string | null
@@ -86,6 +88,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          category_id?: string | null
           client_id?: string
           created_at?: string
           deadline?: string | null
@@ -105,6 +108,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_requests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "task_categories"
             referencedColumns: ["id"]
           },
           {
@@ -611,6 +621,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      task_categories: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       team_calendar_events: {
         Row: {
