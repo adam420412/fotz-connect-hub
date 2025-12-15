@@ -22,6 +22,7 @@ import {
   FileCheck,
   Shield,
   BarChart3,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -53,6 +54,7 @@ const Sidebar = () => {
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
     { icon: Clock, label: "Czas pracy", href: "/time-tracking" },
+    { icon: Calendar, label: "Kalendarz", href: "/team-calendar" },
     { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: Users, label: "Zespół", href: "/team" },
     { icon: UserPlus, label: "Zaproszenia", href: "/invitations" },
