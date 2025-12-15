@@ -70,10 +70,28 @@ export function useTaskCategories() {
     },
   });
 
+  const updateCategory = useMutation({
+    mutationFn: async (data: { id: string; name: string; color: string }) => {
+      const { data: result, error } = await supabase
+        .from("task_categories")
+        .update({ name: data.name, color: data.color })
+        .eq("id", data.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task-categories"] });
+    },
+  });
+
   return {
     categories,
     isLoading,
     createCategory: createCategory.mutate,
     deleteCategory: deleteCategory.mutate,
+    updateCategory: updateCategory.mutate,
   };
 }
