@@ -134,6 +134,39 @@ export type Database = {
           },
         ]
       }
+      file_folders: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           company_name: string | null
@@ -274,6 +307,7 @@ export type Database = {
           created_at: string
           file_size: number
           file_type: string
+          folder_id: string | null
           id: string
           name: string
           parent_file_id: string | null
@@ -288,6 +322,7 @@ export type Database = {
           created_at?: string
           file_size: number
           file_type: string
+          folder_id?: string | null
           id?: string
           name: string
           parent_file_id?: string | null
@@ -302,6 +337,7 @@ export type Database = {
           created_at?: string
           file_size?: number
           file_type?: string
+          folder_id?: string | null
           id?: string
           name?: string
           parent_file_id?: string | null
@@ -313,6 +349,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "project_files_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "file_folders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_files_parent_file_id_fkey"
             columns: ["parent_file_id"]
@@ -402,6 +445,48 @@ export type Database = {
           is_active?: boolean
           name?: string
           role?: string
+        }
+        Relationships: []
+      }
+      time_entries: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          end_time: string | null
+          id: string
+          is_running: boolean
+          project_id: string | null
+          start_time: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          is_running?: boolean
+          project_id?: string | null
+          start_time: string
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          is_running?: boolean
+          project_id?: string | null
+          start_time?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
