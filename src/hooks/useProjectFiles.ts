@@ -18,6 +18,7 @@ export interface ProjectFile {
   created_at: string;
   updated_at: string;
   parent_file_id: string | null;
+  folder_id: string | null;
 }
 
 export const useProjectFiles = () => {

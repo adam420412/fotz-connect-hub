@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, DragEvent } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Search,
   FolderPlus,
   Folder,
@@ -22,15 +29,18 @@ import {
   Eye,
   Download,
   Calendar,
-  ChevronRight,
   Loader2,
+  Users,
+  GripVertical,
 } from "lucide-react";
 import { useProjectFiles, formatFileSize, FileStatus, ProjectFile } from "@/hooks/useProjectFiles";
 import { useFileFolders, FileFolder } from "@/hooks/useFileFolders";
+import { useClients } from "@/hooks/useClients";
 import FilePreviewDialog from "@/components/files/FilePreviewDialog";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { toast } from "sonner";
 
 const statusConfig: Record<FileStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   draft: { label: "Roboczy", variant: "secondary" },
@@ -53,22 +63,39 @@ const FileIcon = ({ type }: { type: string }) => {
 const ApprovalCenter = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [selectedClient, setSelectedClient] = useState<string>("all");
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderDate, setNewFolderDate] = useState("");
+  const [newFolderClient, setNewFolderClient] = useState<string>("");
+  const [draggedFileId, setDraggedFileId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
 
   const { files, isLoading: filesLoading, updateStatus, downloadFile } = useProjectFiles();
-  const { folders, isLoading: foldersLoading, createFolder, isCreating } = useFileFolders();
+  const { folders, isLoading: foldersLoading, createFolder, assignFileToFolder, isCreating } = useFileFolders();
+  const { data: clients = [], isLoading: clientsLoading } = useClients();
 
   // Filter files needing approval
   const pendingFiles = files.filter((f) => f.status === "pending_approval");
   
-  // Filter by folder and search
+  // Filter by folder, client and search
   const filteredFiles = pendingFiles.filter((file) => {
     const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFolder = selectedFolder === null || (file as any).folder_id === selectedFolder;
-    return matchesSearch && matchesFolder;
+    const matchesFolder = selectedFolder === null || file.folder_id === selectedFolder;
+    // For client filter, we'd need to check the folder's client_id
+    const folder = folders.find(f => f.id === file.folder_id);
+    const matchesClient = selectedClient === "all" || 
+      (folder?.client_id === selectedClient) ||
+      (selectedClient === "unassigned" && !file.folder_id);
+    return matchesSearch && matchesFolder && matchesClient;
+  });
+
+  // Filter folders by selected client
+  const filteredFolders = folders.filter((folder) => {
+    if (selectedClient === "all") return true;
+    if (selectedClient === "unassigned") return !folder.client_id;
+    return folder.client_id === selectedClient;
   });
 
   const handleApprove = (fileId: string) => {
@@ -84,14 +111,57 @@ const ApprovalCenter = () => {
       createFolder({
         name: newFolderName.trim(),
         eventDate: newFolderDate || undefined,
+        clientId: newFolderClient || undefined,
       });
       setNewFolderName("");
       setNewFolderDate("");
+      setNewFolderClient("");
       setCreateFolderOpen(false);
     }
   };
 
-  const isLoading = filesLoading || foldersLoading;
+  // Drag & Drop handlers
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, fileId: string) => {
+    setDraggedFileId(fileId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", fileId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedFileId(null);
+    setDragOverFolderId(null);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLButtonElement>, folderId: string | null) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverFolderId(folderId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverFolderId(null);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLButtonElement>, folderId: string | null) => {
+    e.preventDefault();
+    const fileId = e.dataTransfer.getData("text/plain");
+    
+    if (fileId && folderId !== dragOverFolderId) {
+      assignFileToFolder({ fileId, folderId });
+      toast.success(folderId ? "Plik przeniesiony do folderu" : "Plik usunięty z folderu");
+    }
+    
+    setDraggedFileId(null);
+    setDragOverFolderId(null);
+  };
+
+  const getClientName = (clientId: string | null) => {
+    if (!clientId) return null;
+    const client = clients.find(c => c.id === clientId);
+    return client?.company_name || client?.full_name || client?.email;
+  };
+
+  const isLoading = filesLoading || foldersLoading || clientsLoading;
 
   return (
     <DashboardLayout title="Centrum Akceptacji">
@@ -102,10 +172,28 @@ const ApprovalCenter = () => {
             <h1 className="text-2xl font-bold text-foreground">Centrum Akceptacji</h1>
             <p className="text-muted-foreground">
               {pendingFiles.length} {pendingFiles.length === 1 ? "plik czeka" : "plików czeka"} na akceptację
+              {draggedFileId && <span className="text-primary ml-2">• Przeciągnij plik do folderu</span>}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-64">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Client Filter */}
+            <Select value={selectedClient} onValueChange={setSelectedClient}>
+              <SelectTrigger className="w-48">
+                <Users className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Wybierz klienta" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszyscy klienci</SelectItem>
+                <SelectItem value="unassigned">Nieprzypisane</SelectItem>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.company_name || client.full_name || client.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="relative flex-1 sm:w-48">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Szukaj plików..."
@@ -114,6 +202,7 @@ const ApprovalCenter = () => {
                 className="pl-10"
               />
             </div>
+
             <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
@@ -142,6 +231,21 @@ const ApprovalCenter = () => {
                       onChange={(e) => setNewFolderDate(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Przypisz do klienta</Label>
+                    <Select value={newFolderClient} onValueChange={setNewFolderClient}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Wybierz klienta..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.company_name || client.full_name || client.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button 
                     onClick={handleCreateFolder} 
                     className="w-full"
@@ -159,14 +263,21 @@ const ApprovalCenter = () => {
         <div className="grid gap-6 lg:grid-cols-4">
           {/* Folders Sidebar */}
           <div className="lg:col-span-1 space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">Foldery</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Foldery {selectedClient !== "all" && "(filtrowane)"}
+            </h3>
+            
+            {/* All files - drop zone */}
             <button
               onClick={() => setSelectedFolder(null)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+              onDragOver={(e) => handleDragOver(e, null)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, null)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                 selectedFolder === null 
                   ? "bg-primary/10 text-primary" 
                   : "hover:bg-muted text-foreground"
-              }`}
+              } ${dragOverFolderId === null && draggedFileId ? "ring-2 ring-primary ring-dashed bg-primary/5" : ""}`}
             >
               <Folder className="h-4 w-4" />
               <span className="flex-1 truncate">Wszystkie pliki</span>
@@ -175,33 +286,43 @@ const ApprovalCenter = () => {
               </Badge>
             </button>
             
-            {folders.map((folder) => {
+            {filteredFolders.map((folder) => {
               const folderFileCount = pendingFiles.filter(
-                (f) => (f as any).folder_id === folder.id
+                (f) => f.folder_id === folder.id
               ).length;
+              const clientName = getClientName(folder.client_id);
+              const isDragOver = dragOverFolderId === folder.id;
               
               return (
                 <button
                   key={folder.id}
                   onClick={() => setSelectedFolder(folder.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                  onDragOver={(e) => handleDragOver(e, folder.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, folder.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                     selectedFolder === folder.id 
                       ? "bg-primary/10 text-primary" 
                       : "hover:bg-muted text-foreground"
-                  }`}
+                  } ${isDragOver && draggedFileId ? "ring-2 ring-primary ring-dashed bg-primary/5 scale-[1.02]" : ""}`}
                 >
-                  <Folder className="h-4 w-4" />
+                  <Folder className={`h-4 w-4 ${isDragOver ? "text-primary" : ""}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm">{folder.name}</p>
-                    {folder.event_date && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {format(new Date(folder.event_date), "d MMM yyyy", { locale: pl })}
-                      </p>
-                    )}
+                    <p className="truncate text-sm font-medium">{folder.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {folder.event_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(folder.event_date), "d MMM", { locale: pl })}
+                        </span>
+                      )}
+                      {clientName && (
+                        <span className="truncate">{clientName}</span>
+                      )}
+                    </div>
                   </div>
                   {folderFileCount > 0 && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs shrink-0">
                       {folderFileCount}
                     </Badge>
                   )}
@@ -209,7 +330,7 @@ const ApprovalCenter = () => {
               );
             })}
 
-            {folders.length === 0 && !foldersLoading && (
+            {filteredFolders.length === 0 && !foldersLoading && (
               <p className="text-sm text-muted-foreground px-3 py-4 text-center">
                 Brak folderów. Utwórz pierwszy folder, aby organizować pliki.
               </p>
@@ -232,61 +353,85 @@ const ApprovalCenter = () => {
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="group rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/30 hover:shadow-md"
-                  >
-                    {/* Preview */}
-                    <div 
-                      className="aspect-video flex items-center justify-center bg-muted cursor-pointer relative"
-                      onClick={() => setPreviewFile(file)}
+                {filteredFiles.map((file) => {
+                  const folder = folders.find(f => f.id === file.folder_id);
+                  const clientName = getClientName(folder?.client_id || null);
+                  const isDragging = draggedFileId === file.id;
+                  
+                  return (
+                    <div
+                      key={file.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, file.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`group rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/30 hover:shadow-md cursor-grab active:cursor-grabbing ${
+                        isDragging ? "opacity-50 scale-95 ring-2 ring-primary" : ""
+                      }`}
                     >
-                      <FileIcon type={file.file_type} />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Eye className="h-8 w-8 text-white" />
-                      </div>
-                    </div>
-                    
-                    {/* Info */}
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <h3 className="font-medium text-foreground truncate">{file.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {formatFileSize(file.file_size)} • v{file.version}
-                        </p>
+                      {/* Drag Handle */}
+                      <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-b border-border">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground truncate flex-1">
+                          {folder ? folder.name : "Nieprzypisany"}
+                        </span>
+                        {clientName && (
+                          <Badge variant="outline" className="text-xs">
+                            {clientName}
+                          </Badge>
+                        )}
                       </div>
                       
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          className="flex-1 gap-1"
-                          onClick={() => handleApprove(file.id)}
-                        >
-                          <Check className="h-3 w-3" />
-                          Akceptuj
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="flex-1 gap-1"
-                          onClick={() => handleReject(file.id)}
-                        >
-                          <X className="h-3 w-3" />
-                          Odrzuć
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => downloadFile(file)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                      {/* Preview */}
+                      <div 
+                        className="aspect-video flex items-center justify-center bg-muted cursor-pointer relative"
+                        onClick={() => setPreviewFile(file)}
+                      >
+                        <FileIcon type={file.file_type} />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <Eye className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
+                      
+                      {/* Info */}
+                      <div className="p-4 space-y-3">
+                        <div>
+                          <h3 className="font-medium text-foreground truncate">{file.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(file.file_size)} • v{file.version}
+                          </p>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            className="flex-1 gap-1"
+                            onClick={() => handleApprove(file.id)}
+                          >
+                            <Check className="h-3 w-3" />
+                            Akceptuj
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="flex-1 gap-1"
+                            onClick={() => handleReject(file.id)}
+                          >
+                            <X className="h-3 w-3" />
+                            Odrzuć
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => downloadFile(file)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
