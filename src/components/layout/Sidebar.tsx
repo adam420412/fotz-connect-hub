@@ -12,6 +12,9 @@ import {
   LogOut,
   ChevronLeft,
   Zap,
+  Newspaper,
+  CalendarDays,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -38,9 +41,9 @@ const Sidebar = ({ userRole = "client" }: SidebarProps) => {
     { icon: FileBox, label: "Pliki", href: "/files" },
     { icon: Users, label: "Zespół", href: "/team" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
-    { icon: Zap, label: "AI Asystent", href: "/ai-assistant" },
-    { icon: Zap, label: "Codzienny Post", href: "/daily-post" },
-    { icon: Zap, label: "Newsy", href: "/marketing-news" },
+    { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
+    { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
+    { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
   ];
 
   const navItems = userRole === "client" ? clientNav : teamNav;
