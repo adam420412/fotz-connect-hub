@@ -49,6 +49,44 @@ export type Database = {
           },
         ]
       }
+      file_comments: {
+        Row: {
+          author_email: string | null
+          author_name: string
+          author_role: string
+          content: string
+          created_at: string
+          file_id: string
+          id: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_name: string
+          author_role?: string
+          content: string
+          created_at?: string
+          file_id: string
+          id?: string
+        }
+        Update: {
+          author_email?: string | null
+          author_name?: string
+          author_role?: string
+          content?: string
+          created_at?: string
+          file_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_comments_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "project_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_news: {
         Row: {
           category: string
