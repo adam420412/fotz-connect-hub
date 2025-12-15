@@ -18,6 +18,9 @@ import {
   Grid,
   List,
   Loader2,
+  MessageSquare,
+  PanelRightOpen,
+  PanelRightClose,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,6 +31,7 @@ import {
 import { useProjectFiles, formatFileSize, FileStatus, ProjectFile } from "@/hooks/useProjectFiles";
 import FileUploadDialog from "@/components/files/FileUploadDialog";
 import FilePreviewDialog from "@/components/files/FilePreviewDialog";
+import FileCommentsPanel from "@/components/files/FileCommentsPanel";
 
 const statusConfig: Record<FileStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   draft: { label: "Roboczy", variant: "secondary" },
@@ -67,6 +71,8 @@ const Files = () => {
   const [statusFilter, setStatusFilter] = useState<FileStatus | "all">("all");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
+  const [selectedFileForComments, setSelectedFileForComments] = useState<ProjectFile | null>(null);
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
 
   const {
     files,
@@ -92,12 +98,19 @@ const Files = () => {
     updateStatus({ fileId, status: "rejected" });
   };
 
+  const handleOpenComments = (file: ProjectFile) => {
+    setSelectedFileForComments(file);
+    setCommentsPanelOpen(true);
+  };
+
   return (
     <DashboardLayout title="Pliki" userRole="client">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-md">
+      <div className="flex gap-6">
+        {/* Main Content */}
+        <div className={`flex-1 space-y-6 transition-all ${commentsPanelOpen ? "lg:mr-80" : ""}`}>
+          {/* Header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Szukaj plików..."
@@ -130,6 +143,18 @@ const Files = () => {
             >
               <Upload className="h-4 w-4" />
               Prześlij plik
+            </Button>
+            <Button
+              variant={commentsPanelOpen ? "secondary" : "outline"}
+              size="icon"
+              onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
+              className="hidden lg:flex"
+            >
+              {commentsPanelOpen ? (
+                <PanelRightClose className="h-4 w-4" />
+              ) : (
+                <PanelRightOpen className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
@@ -182,6 +207,10 @@ const Files = () => {
                         <DropdownMenuItem onClick={() => setPreviewFile(file)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Podgląd
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenComments(file)}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Komentarze
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadFile(file)}>
                           <Download className="mr-2 h-4 w-4" />
@@ -326,6 +355,17 @@ const Files = () => {
                 Prześlij plik
               </Button>
             )}
+          </div>
+        )}
+        </div>
+
+        {/* Comments Side Panel */}
+        {commentsPanelOpen && (
+          <div className="fixed right-0 top-0 h-full w-80 border-l border-border bg-card shadow-lg z-40 hidden lg:block">
+            <FileCommentsPanel
+              fileId={selectedFileForComments?.id || null}
+              fileName={selectedFileForComments?.name || ""}
+            />
           </div>
         )}
       </div>
