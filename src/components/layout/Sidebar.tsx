@@ -21,6 +21,7 @@ import {
   Clock,
   FileCheck,
   Shield,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -59,7 +60,10 @@ const Sidebar = () => {
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
-    ...(isAdmin ? [{ icon: Shield, label: "Panel Admina", href: "/admin" }] : []),
+    ...(isAdmin ? [
+      { icon: Shield, label: "Panel Admina", href: "/admin" },
+      { icon: BarChart3, label: "Raporty", href: "/reports" },
+    ] : []),
   ];
 
   const navItems = isTeamMember ? teamNav : clientNav;

@@ -24,6 +24,7 @@ import Invitations from "./pages/Invitations";
 import ApprovalCenter from "./pages/ApprovalCenter";
 import TimeTracking from "./pages/TimeTracking";
 import Admin from "./pages/Admin";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/approval-center" element={<ProtectedRoute><ApprovalCenter /></ProtectedRoute>} />
               <Route path="/time-tracking" element={<ProtectedRoute requireTeamMember><TimeTracking /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute requireAdmin><Reports /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
