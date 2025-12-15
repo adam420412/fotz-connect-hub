@@ -65,6 +65,14 @@ export default {
           elevated: "hsl(var(--surface-elevated))",
           hover: "hsl(var(--surface-hover))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -96,8 +104,8 @@ export default {
         "slide-up": "slide-up 0.4s ease-out",
       },
       boxShadow: {
-        glow: "0 0 40px hsl(35 100% 50% / 0.15)",
-        "glow-lg": "0 0 60px hsl(35 100% 50% / 0.2)",
+        glow: "0 0 40px hsl(330 70% 35% / 0.15)",
+        "glow-lg": "0 0 60px hsl(330 70% 35% / 0.2)",
       },
     },
   },

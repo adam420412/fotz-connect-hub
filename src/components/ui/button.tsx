@@ -22,7 +22,7 @@ const buttonVariants = cva(
         link:
           "text-primary underline-offset-4 hover:underline",
         gradient:
-          "bg-gradient-to-r from-primary to-amber-400 text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98]",
+          "bg-gradient-fotz text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-accent/30 active:scale-[0.98]",
         glow:
           "bg-primary text-primary-foreground shadow-glow hover:shadow-glow-lg active:scale-[0.98]",
       },
