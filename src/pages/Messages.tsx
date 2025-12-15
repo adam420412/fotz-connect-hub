@@ -124,7 +124,7 @@ const Messages = () => {
   };
 
   return (
-    <DashboardLayout title="Wiadomości" userRole="client">
+    <DashboardLayout title="Wiadomości" userRole="manager">
       <div className="flex h-[calc(100vh-12rem)] rounded-xl border border-border bg-card overflow-hidden">
         {/* Conversations List */}
         <div className="w-80 border-r border-border flex flex-col">

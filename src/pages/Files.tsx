@@ -111,7 +111,7 @@ const Files = () => {
   };
 
   return (
-    <DashboardLayout title="Pliki" userRole="client">
+    <DashboardLayout title="Pliki" userRole="manager">
       <div className="flex gap-6">
         {/* Main Content */}
         <div className={`flex-1 space-y-6 transition-all ${commentsPanelOpen ? "lg:mr-80" : ""}`}>

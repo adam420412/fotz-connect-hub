@@ -116,7 +116,7 @@ const Tasks = () => {
   return (
     <DashboardLayout
       title="Zadania"
-      userRole="client"
+      userRole="manager"
       showNewButton
       newButtonLabel="Nowe zadanie"
     >
