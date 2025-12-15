@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Send, Loader2, Edit2 } from "lucide-react";
+import { ChevronLeft, Send, Loader2, Edit2, Paperclip, FileImage, FileText, FileVideo } from "lucide-react";
 import { BriefConfig } from "./briefConfig";
+import { BriefAttachment } from "./BriefAttachments";
+import { formatFileSize } from "@/hooks/useProjectFiles";
 
 interface BriefSummaryProps {
   config: BriefConfig;
   answers: Record<string, string>;
+  attachments: BriefAttachment[];
   title: string;
   priority: string;
   isSubmitting: boolean;
@@ -23,6 +26,7 @@ const priorityLabels: Record<string, string> = {
 const BriefSummary = ({
   config,
   answers,
+  attachments,
   title,
   priority,
   isSubmitting,
@@ -33,6 +37,12 @@ const BriefSummary = ({
   const answeredQuestions = config.questions.filter(
     (q) => answers[q.id] && answers[q.id].trim()
   );
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <FileImage className="h-4 w-4 text-accent" />;
+    if (type.startsWith("video/")) return <FileVideo className="h-4 w-4 text-primary" />;
+    return <FileText className="h-4 w-4 text-muted-foreground" />;
+  };
 
   return (
     <div className="space-y-6">
@@ -78,6 +88,36 @@ const BriefSummary = ({
           <p className="text-muted-foreground text-center py-4">
             Brak uzupełnionych odpowiedzi
           </p>
+        )}
+
+        {/* Attachments */}
+        {attachments.length > 0 && (
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center gap-2 mb-3">
+              <Paperclip className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium text-muted-foreground">
+                Załączniki ({attachments.length})
+              </p>
+            </div>
+            <div className="space-y-2">
+              {attachments.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
+                >
+                  {getFileIcon(attachment.type)}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {attachment.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatFileSize(attachment.size)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

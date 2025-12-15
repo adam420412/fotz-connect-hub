@@ -10,14 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, Paperclip } from "lucide-react";
 import { BriefConfig, BriefQuestion } from "./briefConfig";
 import { cn } from "@/lib/utils";
+import BriefAttachments, { BriefAttachment } from "./BriefAttachments";
 
 interface BriefQuizProps {
   config: BriefConfig;
   answers: Record<string, string>;
   onAnswersChange: (answers: Record<string, string>) => void;
+  attachments: BriefAttachment[];
+  onAttachmentsChange: (attachments: BriefAttachment[]) => void;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -26,20 +29,27 @@ const BriefQuiz = ({
   config,
   answers,
   onAnswersChange,
+  attachments,
+  onAttachmentsChange,
   onComplete,
   onBack,
 }: BriefQuizProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const questions = config.questions;
-  const currentQuestion = questions[currentStep];
-  const totalSteps = questions.length;
+  // Add attachments as the last step
+  const totalSteps = questions.length + 1;
+  const isAttachmentsStep = currentStep === questions.length;
+  const currentQuestion = isAttachmentsStep ? null : questions[currentStep];
 
   const updateAnswer = (value: string) => {
-    onAnswersChange({ ...answers, [currentQuestion.id]: value });
+    if (currentQuestion) {
+      onAnswersChange({ ...answers, [currentQuestion.id]: value });
+    }
   };
 
   const canProceed = () => {
-    if (!currentQuestion.required) return true;
+    if (isAttachmentsStep) return true;
+    if (!currentQuestion?.required) return true;
     const answer = answers[currentQuestion.id];
     return answer && answer.trim().length > 0;
   };
@@ -125,7 +135,7 @@ const BriefQuiz = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            Pytanie {currentStep + 1} z {totalSteps}
+            {isAttachmentsStep ? "Załączniki" : `Pytanie ${currentStep + 1} z ${questions.length}`}
           </span>
           <span className="text-muted-foreground">{Math.round(progress)}%</span>
         </div>
@@ -137,20 +147,39 @@ const BriefQuiz = ({
         </div>
       </div>
 
-      {/* Question */}
+      {/* Question or Attachments */}
       <div className="rounded-xl border border-border bg-card p-6 min-h-[200px]">
-        <Label className="text-base font-medium">
-          {currentQuestion.question}
-          {currentQuestion.required && (
-            <span className="text-destructive ml-1">*</span>
-          )}
-        </Label>
-        {renderQuestionInput(currentQuestion)}
+        {isAttachmentsStep ? (
+          <div className="space-y-4">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Paperclip className="h-4 w-4" />
+              Załącz pliki do zadania (opcjonalne)
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Dodaj zdjęcia, dokumenty lub inne materiały pomocne w realizacji zadania
+            </p>
+            <BriefAttachments
+              attachments={attachments}
+              onAttachmentsChange={onAttachmentsChange}
+              maxFiles={5}
+            />
+          </div>
+        ) : currentQuestion && (
+          <>
+            <Label className="text-base font-medium">
+              {currentQuestion.question}
+              {currentQuestion.required && (
+                <span className="text-destructive ml-1">*</span>
+              )}
+            </Label>
+            {renderQuestionInput(currentQuestion)}
+          </>
+        )}
       </div>
 
       {/* Step indicators */}
       <div className="flex justify-center gap-1.5">
-        {questions.map((_, index) => (
+        {[...Array(totalSteps)].map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentStep(index)}
@@ -158,7 +187,11 @@ const BriefQuiz = ({
               "h-2 rounded-full transition-all duration-200",
               index === currentStep
                 ? "w-6 bg-primary"
-                : answers[questions[index].id]
+                : index === questions.length
+                ? attachments.length > 0
+                  ? "w-2 bg-primary/50"
+                  : "w-2 bg-muted"
+                : answers[questions[index]?.id]
                 ? "w-2 bg-primary/50"
                 : "w-2 bg-muted"
             )}
