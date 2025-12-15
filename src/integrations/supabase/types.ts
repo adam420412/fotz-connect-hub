@@ -206,6 +206,59 @@ export type Database = {
           },
         ]
       }
+      scheduled_posts: {
+        Row: {
+          author_id: string | null
+          client_name: string | null
+          content: string
+          created_at: string
+          hashtags: string | null
+          id: string
+          platform: string
+          scheduled_date: string
+          scheduled_time: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          client_name?: string | null
+          content: string
+          created_at?: string
+          hashtags?: string | null
+          id?: string
+          platform: string
+          scheduled_date: string
+          scheduled_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          client_name?: string | null
+          content?: string
+          created_at?: string
+          hashtags?: string | null
+          id?: string
+          platform?: string
+          scheduled_date?: string
+          scheduled_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           avatar_url: string | null
