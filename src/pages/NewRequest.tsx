@@ -27,6 +27,7 @@ import {
   Clock,
   Loader2,
   ClipboardList,
+  Paperclip,
 } from "lucide-react";
 import { useClientRequests, CreateRequestData } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
@@ -35,6 +36,7 @@ import { pl } from "date-fns/locale";
 import { briefConfigs, formatBriefAnswers } from "@/components/requests/briefConfig";
 import BriefQuiz from "@/components/requests/BriefQuiz";
 import BriefSummary from "@/components/requests/BriefSummary";
+import BriefAttachments, { BriefAttachment } from "@/components/requests/BriefAttachments";
 
 const requestTypeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
   task: { label: "Nowe zadanie", icon: <CheckSquare className="h-4 w-4" /> },
@@ -71,6 +73,7 @@ const NewRequest = () => {
   const [formPriority, setFormPriority] = useState<CreateRequestData["priority"]>("normal");
   const [formFileId, setFormFileId] = useState<string>("");
   const [briefAnswers, setBriefAnswers] = useState<Record<string, string>>({});
+  const [briefAttachments, setBriefAttachments] = useState<BriefAttachment[]>([]);
 
   const resetForm = () => {
     setFormType("task");
@@ -78,6 +81,7 @@ const NewRequest = () => {
     setFormPriority("normal");
     setFormFileId("");
     setBriefAnswers({});
+    setBriefAttachments([]);
     setDialogStep("type_select");
   };
 
@@ -93,7 +97,15 @@ const NewRequest = () => {
   const handleSubmit = () => {
     if (!formTitle.trim()) return;
 
-    const formattedBrief = formatBriefAnswers(formType, briefAnswers);
+    let formattedBrief = formatBriefAnswers(formType, briefAnswers);
+
+    // Add attachments info to description
+    if (briefAttachments.length > 0) {
+      const attachmentsInfo = briefAttachments
+        .map((a) => `- ${a.name} (${a.storagePath})`)
+        .join("\n");
+      formattedBrief += `\n\n**Załączniki:**\n${attachmentsInfo}`;
+    }
 
     const data: CreateRequestData = {
       title: formTitle.trim(),
@@ -293,6 +305,8 @@ const NewRequest = () => {
               config={briefConfigs[formType]}
               answers={briefAnswers}
               onAnswersChange={setBriefAnswers}
+              attachments={briefAttachments}
+              onAttachmentsChange={setBriefAttachments}
               onComplete={handleBriefComplete}
               onBack={() => setDialogStep("type_select")}
             />
@@ -302,6 +316,7 @@ const NewRequest = () => {
             <BriefSummary
               config={briefConfigs[formType]}
               answers={briefAnswers}
+              attachments={briefAttachments}
               title={formTitle}
               priority={formPriority}
               isSubmitting={isCreating}
