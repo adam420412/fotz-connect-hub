@@ -34,9 +34,10 @@ import {
   GripVertical,
 } from "lucide-react";
 import { useProjectFiles, formatFileSize, FileStatus, ProjectFile } from "@/hooks/useProjectFiles";
-import { useFileFolders, FileFolder } from "@/hooks/useFileFolders";
+import { useFileFolders } from "@/hooks/useFileFolders";
 import { useClients } from "@/hooks/useClients";
 import FilePreviewDialog from "@/components/files/FilePreviewDialog";
+import { FileThumbnail } from "@/components/files/FileThumbnail";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -381,14 +382,19 @@ const ApprovalCenter = () => {
                         )}
                       </div>
                       
-                      {/* Preview */}
+                      {/* Preview with Thumbnail */}
                       <div 
-                        className="aspect-video flex items-center justify-center bg-muted cursor-pointer relative"
+                        className="aspect-video cursor-pointer relative"
                         onClick={() => setPreviewFile(file)}
                       >
-                        <FileIcon type={file.file_type} />
+                        <FileThumbnail
+                          storagePath={file.storage_path}
+                          fileType={file.file_type}
+                          fileName={file.name}
+                          className="absolute inset-0 w-full h-full"
+                        />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <Eye className="h-8 w-8 text-white" />
+                          <Eye className="h-8 w-8 text-white drop-shadow-lg" />
                         </div>
                       </div>
                       
