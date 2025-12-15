@@ -14,7 +14,190 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_post_assignments: {
+        Row: {
+          ai_suggestions: Json | null
+          assignment_date: string
+          created_at: string
+          id: string
+          post_created: boolean
+          team_member_id: string
+        }
+        Insert: {
+          ai_suggestions?: Json | null
+          assignment_date?: string
+          created_at?: string
+          id?: string
+          post_created?: boolean
+          team_member_id: string
+        }
+        Update: {
+          ai_suggestions?: Json | null
+          assignment_date?: string
+          created_at?: string
+          id?: string
+          post_created?: boolean
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_post_assignments_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_news: {
+        Row: {
+          category: string
+          created_at: string
+          fetched_at: string
+          id: string
+          relevance_score: number | null
+          source_name: string | null
+          source_url: string | null
+          summary: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          relevance_score?: number | null
+          source_name?: string | null
+          source_url?: string | null
+          summary: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          relevance_score?: number | null
+          source_name?: string | null
+          source_url?: string | null
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          client_email: string
+          client_name: string
+          created_at: string
+          id: string
+          notify_on_file_upload: boolean
+          notify_on_status_change: boolean
+          notify_on_task_complete: boolean
+        }
+        Insert: {
+          client_email: string
+          client_name: string
+          created_at?: string
+          id?: string
+          notify_on_file_upload?: boolean
+          notify_on_status_change?: boolean
+          notify_on_task_complete?: boolean
+        }
+        Update: {
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          notify_on_file_upload?: boolean
+          notify_on_status_change?: boolean
+          notify_on_task_complete?: boolean
+        }
+        Relationships: []
+      }
+      project_files: {
+        Row: {
+          created_at: string
+          file_size: number
+          file_type: string
+          id: string
+          name: string
+          parent_file_id: string | null
+          project_id: string
+          status: string
+          storage_path: string
+          updated_at: string
+          uploaded_by: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          file_size: number
+          file_type: string
+          id?: string
+          name: string
+          parent_file_id?: string | null
+          project_id: string
+          status?: string
+          storage_path: string
+          updated_at?: string
+          uploaded_by: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          name?: string
+          parent_file_id?: string | null
+          project_id?: string
+          status?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_parent_file_id_fkey"
+            columns: ["parent_file_id"]
+            isOneToOne: false
+            referencedRelation: "project_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          role: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          role: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          role?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

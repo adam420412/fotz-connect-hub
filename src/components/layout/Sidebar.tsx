@@ -38,6 +38,9 @@ const Sidebar = ({ userRole = "client" }: SidebarProps) => {
     { icon: FileBox, label: "Pliki", href: "/files" },
     { icon: Users, label: "Zespół", href: "/team" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
+    { icon: Zap, label: "AI Asystent", href: "/ai-assistant" },
+    { icon: Zap, label: "Codzienny Post", href: "/daily-post" },
+    { icon: Zap, label: "Newsy", href: "/marketing-news" },
   ];
 
   const navItems = userRole === "client" ? clientNav : teamNav;

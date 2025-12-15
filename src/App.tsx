@@ -12,6 +12,9 @@ import Files from "./pages/Files";
 import Messages from "./pages/Messages";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
+import AIAssistant from "./pages/AIAssistant";
+import DailyPost from "./pages/DailyPost";
+import MarketingNews from "./pages/MarketingNews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +35,9 @@ const App = () => (
           <Route path="/messages" element={<Messages />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/ai-assistant" element={<AIAssistant />} />
+          <Route path="/daily-post" element={<DailyPost />} />
+          <Route path="/marketing-news" element={<MarketingNews />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
