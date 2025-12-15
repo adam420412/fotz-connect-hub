@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       client_requests: {
         Row: {
           client_id: string
@@ -271,36 +310,50 @@ export type Database = {
       }
       profiles: {
         Row: {
+          assigned_team_member_id: string | null
           avatar_url: string | null
           company_name: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
+          is_active: boolean
           phone: string | null
           updated_at: string
         }
         Insert: {
+          assigned_team_member_id?: string | null
           avatar_url?: string | null
           company_name?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id: string
+          is_active?: boolean
           phone?: string | null
           updated_at?: string
         }
         Update: {
+          assigned_team_member_id?: string | null
           avatar_url?: string | null
           company_name?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_assigned_team_member_id_fkey"
+            columns: ["assigned_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_files: {
         Row: {
