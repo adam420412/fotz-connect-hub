@@ -58,10 +58,12 @@ export type Database = {
           assigned_to: string | null
           client_id: string
           created_at: string
+          deadline: string | null
           description: string | null
           id: string
           priority: string | null
           related_file_id: string | null
+          reminder_sent: boolean
           request_type: string
           status: string
           title: string
@@ -71,10 +73,12 @@ export type Database = {
           assigned_to?: string | null
           client_id: string
           created_at?: string
+          deadline?: string | null
           description?: string | null
           id?: string
           priority?: string | null
           related_file_id?: string | null
+          reminder_sent?: boolean
           request_type: string
           status?: string
           title: string
@@ -84,10 +88,12 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string
           created_at?: string
+          deadline?: string | null
           description?: string | null
           id?: string
           priority?: string | null
           related_file_id?: string | null
+          reminder_sent?: boolean
           request_type?: string
           status?: string
           title?: string

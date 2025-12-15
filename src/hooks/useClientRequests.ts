@@ -13,6 +13,8 @@ export interface ClientRequest {
   status: "pending" | "in_progress" | "completed" | "cancelled";
   priority: "low" | "normal" | "high" | "urgent";
   assigned_to: string | null;
+  deadline: string | null;
+  reminder_sent: boolean;
   created_at: string;
   updated_at: string;
   // Joined data

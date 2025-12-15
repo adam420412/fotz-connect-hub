@@ -35,17 +35,23 @@ import {
   SortAsc,
   SortDesc,
   User,
+  LayoutGrid,
+  List,
+  Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
 import { useAuth } from "@/hooks/useAuth";
-import { format } from "date-fns";
+import { format, isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { pl } from "date-fns/locale";
 import { briefConfigs, formatBriefAnswers } from "@/components/requests/briefConfig";
 import BriefQuiz from "@/components/requests/BriefQuiz";
 import BriefSummary from "@/components/requests/BriefSummary";
 import BriefAttachments, { BriefAttachment } from "@/components/requests/BriefAttachments";
 import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
+import RequestKanban from "@/components/requests/RequestKanban";
+import { cn } from "@/lib/utils";
 
 const requestTypeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
   task: { label: "Nowe zadanie", icon: <CheckSquare className="h-4 w-4" /> },
@@ -69,6 +75,30 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 };
 
 type DialogStep = "type_select" | "brief_quiz" | "summary";
+type ViewMode = "list" | "kanban";
+
+const getDeadlineInfo = (deadline: string | null) => {
+  if (!deadline) return null;
+  
+  const deadlineDate = new Date(deadline);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (isPast(deadlineDate) && !isToday(deadlineDate)) {
+    return { text: "Po terminie!", className: "text-destructive", urgent: true };
+  }
+  if (isToday(deadlineDate)) {
+    return { text: "Dziś", className: "text-orange-600", urgent: true };
+  }
+  if (isTomorrow(deadlineDate)) {
+    return { text: "Jutro", className: "text-orange-500", urgent: false };
+  }
+  const days = differenceInDays(deadlineDate, today);
+  if (days <= 3) {
+    return { text: `Za ${days} dni`, className: "text-yellow-600", urgent: false };
+  }
+  return { text: format(deadlineDate, "d MMM", { locale: pl }), className: "text-muted-foreground", urgent: false };
+};
 
 const NewRequest = () => {
   const { requests, isLoading, createRequest, updateRequest, isCreating } = useClientRequests();
@@ -81,7 +111,8 @@ const NewRequest = () => {
 
   const isTeamMember = role && ["admin", "manager", "employee"].includes(role);
 
-  // Filter & Sort state
+  // View mode & Filter state
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "priority">("date");
@@ -172,6 +203,10 @@ const NewRequest = () => {
     updateRequest({ id, assigned_to: assignedTo });
   };
 
+  const handleDeadlineChange = (id: string, deadline: string | null) => {
+    updateRequest({ id, deadline });
+  };
+
   const handleDialogClose = (open: boolean) => {
     if (!open) {
       resetForm();
@@ -232,7 +267,7 @@ const NewRequest = () => {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2">
               <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as "date" | "priority")}>
                 <SelectTrigger className="w-[120px] h-9">
@@ -254,6 +289,25 @@ const NewRequest = () => {
                 ) : (
                   <SortAsc className="h-4 w-4" />
                 )}
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1 ml-2">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "kanban" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode("kanban")}
+              >
+                <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -284,65 +338,88 @@ const NewRequest = () => {
               Zmień filtry, aby zobaczyć więcej zadań
             </p>
           </div>
+        ) : viewMode === "kanban" ? (
+          <RequestKanban
+            requests={filteredRequests}
+            onRequestClick={handleRequestClick}
+            onStatusChange={handleStatusChange}
+          />
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Pokazuję {filteredRequests.length} z {requests.length} zadań
             </p>
-            {filteredRequests.map((request) => (
-              <div
-                key={request.id}
-                className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 cursor-pointer group"
-                onClick={() => handleRequestClick(request)}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {requestTypeConfig[request.request_type]?.icon}
-                      <h3 className="font-medium text-foreground">{request.title}</h3>
-                    </div>
-                    {request.description && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {request.description.split("\n")[0]}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-3 text-sm flex-wrap">
-                      <Badge variant={statusConfig[request.status].variant}>
-                        {statusConfig[request.status].label}
-                      </Badge>
-                      <span className={priorityConfig[request.priority].className}>
-                        {priorityConfig[request.priority].label}
-                      </span>
-                      {request.assigned_member && (
-                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
-                              {request.assigned_member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {request.assigned_member.name}
-                        </span>
+            {filteredRequests.map((request) => {
+              const deadlineInfo = getDeadlineInfo(request.deadline);
+              
+              return (
+                <div
+                  key={request.id}
+                  className={cn(
+                    "rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 cursor-pointer group",
+                    deadlineInfo?.urgent && "border-l-4 border-l-destructive"
+                  )}
+                  onClick={() => handleRequestClick(request)}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {requestTypeConfig[request.request_type]?.icon}
+                        <h3 className="font-medium text-foreground">{request.title}</h3>
+                      </div>
+                      {request.description && (
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {request.description.split("\n")[0]}
+                        </p>
                       )}
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {format(new Date(request.created_at), "d MMM yyyy, HH:mm", { locale: pl })}
-                      </span>
+                      <div className="flex items-center gap-3 text-sm flex-wrap">
+                        <Badge variant={statusConfig[request.status].variant}>
+                          {statusConfig[request.status].label}
+                        </Badge>
+                        <span className={priorityConfig[request.priority].className}>
+                          {priorityConfig[request.priority].label}
+                        </span>
+                        {deadlineInfo && (
+                          <span className={cn("flex items-center gap-1", deadlineInfo.className)}>
+                            {deadlineInfo.urgent ? (
+                              <AlertTriangle className="h-3 w-3" />
+                            ) : (
+                              <Calendar className="h-3 w-3" />
+                            )}
+                            {deadlineInfo.text}
+                          </span>
+                        )}
+                        {request.assigned_member && (
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <Avatar className="h-5 w-5">
+                              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                                {request.assigned_member.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {request.assigned_member.name}
+                          </span>
+                        )}
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {format(new Date(request.created_at), "d MMM yyyy, HH:mm", { locale: pl })}
+                        </span>
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRequestClick(request);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRequestClick(request);
-                    }}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -354,6 +431,7 @@ const NewRequest = () => {
         onOpenChange={setIsDetailsOpen}
         onStatusChange={handleStatusChange}
         onAssign={handleAssign}
+        onDeadlineChange={handleDeadlineChange}
         isTeamMember={isTeamMember}
       />
 
