@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLogger";
+import { syncToGoogleCalendar } from "@/utils/googleCalendarSync";
 
 export interface ClientRequest {
   id: string;
@@ -114,6 +115,18 @@ export function useClientRequests() {
         request_type: variables.request_type,
         priority: variables.priority || "normal",
       });
+      // Sync task with deadline to Google Calendar
+      if (data.deadline) {
+        syncToGoogleCalendar({
+          entityType: "task",
+          entityId: data.id,
+          entityData: {
+            title: data.title,
+            description: data.description,
+            deadline: data.deadline,
+          },
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -142,6 +155,18 @@ export function useClientRequests() {
       logActivity("request_update", "request", variables.id, null, {
         updated_fields: Object.keys(variables).filter(k => k !== 'id'),
       });
+      // Sync to Google Calendar if deadline exists
+      if (variables.deadline !== undefined) {
+        syncToGoogleCalendar({
+          entityType: "task",
+          entityId: variables.id,
+          entityData: {
+            title: variables.title,
+            description: variables.description,
+            deadline: variables.deadline,
+          },
+        });
+      }
     },
   });
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLogger";
+import { syncToGoogleCalendar } from "@/utils/googleCalendarSync";
 
 export type CalendarEventType = "vacation" | "availability" | "deadline" | "meeting" | "other";
 export type CalendarEventStatus = "pending" | "confirmed" | "cancelled";
@@ -84,6 +85,12 @@ export function useTeamCalendar() {
         event_type: variables.event_type,
         start_date: variables.start_date,
       });
+      // Sync to Google Calendar
+      syncToGoogleCalendar({
+        entityType: "calendar_event",
+        entityId: data.id,
+        entityData: data,
+      });
     },
     onError: (error: any) => {
       toast({
@@ -112,6 +119,12 @@ export function useTeamCalendar() {
         title: "Zaktualizowano",
         description: "Wydarzenie zostało zaktualizowane",
       });
+      // Sync to Google Calendar
+      syncToGoogleCalendar({
+        entityType: "calendar_event",
+        entityId: data.id,
+        entityData: data,
+      });
     },
     onError: (error: any) => {
       toast({
@@ -136,6 +149,13 @@ export function useTeamCalendar() {
       toast({
         title: "Usunięto",
         description: "Wydarzenie zostało usunięte",
+      });
+      // Delete from Google Calendar
+      syncToGoogleCalendar({
+        entityType: "calendar_event",
+        entityId: id,
+        entityData: {},
+        action: "delete",
       });
     },
     onError: (error: any) => {
