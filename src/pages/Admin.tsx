@@ -2,11 +2,12 @@ import { Helmet } from "react-helmet-async";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building2, Activity, Shield, Loader2 } from "lucide-react";
+import { Users, Building2, Activity, Shield, Loader2, DollarSign } from "lucide-react";
 import { useAdminData } from "@/hooks/useAdminData";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ClientManagement } from "@/components/admin/ClientManagement";
 import { ActivityLogs } from "@/components/admin/ActivityLogs";
+import { RateManagement } from "@/components/admin/RateManagement";
 
 const Admin = () => {
   const {
@@ -102,7 +103,7 @@ const Admin = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Użytkownicy
@@ -110,6 +111,10 @@ const Admin = () => {
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Klienci
+            </TabsTrigger>
+            <TabsTrigger value="rates" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Stawki
             </TabsTrigger>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -150,6 +155,20 @@ const Admin = () => {
                   onAssignTeamMember={assignTeamMember}
                   onToggleArchive={toggleUserActive}
                 />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rates">
+            <Card>
+              <CardHeader>
+                <CardTitle>Stawki godzinowe</CardTitle>
+                <CardDescription>
+                  Ustal stawki godzinowe dla członków zespołu. Stawki są używane do obliczania kosztów projektów.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RateManagement users={users} />
               </CardContent>
             </Card>
           </TabsContent>
