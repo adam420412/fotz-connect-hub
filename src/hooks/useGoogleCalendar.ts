@@ -201,6 +201,46 @@ export function useGoogleCalendar(userId: string | undefined) {
     }
   };
 
+  const syncFromGoogle = async () => {
+    if (!userId || !integration?.sync_enabled) {
+      toast({
+        title: "Synchronizacja niedostępna",
+        description: "Włącz synchronizację, aby pobierać zmiany z Google Calendar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Synchronizacja...",
+        description: "Pobieranie zmian z Google Calendar",
+      });
+
+      const response = await supabase.functions.invoke("google-calendar-webhook", {
+        body: { userId },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      await fetchIntegration();
+
+      toast({
+        title: "Zsynchronizowano",
+        description: "Zmiany z Google Calendar zostały pobrane",
+      });
+    } catch (error) {
+      console.error("Sync from Google error:", error);
+      toast({
+        title: "Błąd synchronizacji",
+        description: "Nie udało się pobrać zmian z Google Calendar",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     integration,
     isLoading,
@@ -210,6 +250,7 @@ export function useGoogleCalendar(userId: string | undefined) {
     disconnect,
     toggleSync,
     syncEntity,
+    syncFromGoogle,
     refresh: fetchIntegration,
   };
 }

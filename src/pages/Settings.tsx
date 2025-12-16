@@ -431,6 +431,23 @@ const Settings = () => {
                     <li>• Przypomnienia 24h i 1h przed terminem</li>
                   </ul>
                 </div>
+
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Synchronizacja dwukierunkowa</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pobierz zmiany wprowadzone w Google Calendar
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={googleCalendar.syncFromGoogle}
+                    disabled={!googleCalendar.integration?.sync_enabled}
+                  >
+                    Synchronizuj teraz
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
