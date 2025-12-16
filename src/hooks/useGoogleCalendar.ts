@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 interface GoogleCalendarIntegration {
   id: string;
@@ -15,6 +17,8 @@ export function useGoogleCalendar(userId: string | undefined) {
   const [integration, setIntegration] = useState<GoogleCalendarIntegration | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchIntegration = useCallback(async () => {
     if (!userId) {
@@ -201,6 +205,48 @@ export function useGoogleCalendar(userId: string | undefined) {
     }
   };
 
+  // Silent background sync (no toast notifications)
+  const backgroundSync = useCallback(async () => {
+    if (!userId || !integration?.sync_enabled || isSyncing) return;
+
+    setIsSyncing(true);
+    try {
+      console.log("[Google Calendar] Background sync started");
+      await supabase.functions.invoke("google-calendar-webhook", {
+        body: { userId },
+      });
+      await fetchIntegration();
+      console.log("[Google Calendar] Background sync completed");
+    } catch (error) {
+      console.error("[Google Calendar] Background sync error:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [userId, integration?.sync_enabled, isSyncing, fetchIntegration]);
+
+  // Auto-sync every 5 minutes when sync is enabled
+  useEffect(() => {
+    if (integration?.sync_enabled && userId) {
+      // Run initial sync
+      backgroundSync();
+
+      // Set up interval
+      syncIntervalRef.current = setInterval(() => {
+        backgroundSync();
+      }, SYNC_INTERVAL_MS);
+
+      console.log("[Google Calendar] Auto-sync enabled (every 5 minutes)");
+    }
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+        console.log("[Google Calendar] Auto-sync disabled");
+      }
+    };
+  }, [integration?.sync_enabled, userId, backgroundSync]);
+
   const syncFromGoogle = async () => {
     if (!userId || !integration?.sync_enabled) {
       toast({
@@ -211,6 +257,7 @@ export function useGoogleCalendar(userId: string | undefined) {
       return;
     }
 
+    setIsSyncing(true);
     try {
       toast({
         title: "Synchronizacja...",
@@ -238,6 +285,8 @@ export function useGoogleCalendar(userId: string | undefined) {
         description: "Nie udało się pobrać zmian z Google Calendar",
         variant: "destructive",
       });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -245,6 +294,7 @@ export function useGoogleCalendar(userId: string | undefined) {
     integration,
     isLoading,
     isConnecting,
+    isSyncing,
     isConnected: !!integration,
     connect,
     disconnect,
