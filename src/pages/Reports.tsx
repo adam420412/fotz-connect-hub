@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   BarChart,
   Bar,
@@ -28,6 +30,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useReportsData } from "@/hooks/useReportsData";
 import {
@@ -38,6 +42,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { 
+  generateTimeReport, 
+  exportTimeReportToCSV, 
+  exportTimeReportByProjectToCSV 
+} from "@/utils/timeReportExport";
+import { useToast } from "@/hooks/use-toast";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -48,6 +58,8 @@ const formatMinutesToHours = (minutes: number) => {
 };
 
 const Reports = () => {
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
   const {
     teamStats,
     clientStats,
@@ -56,6 +68,46 @@ const Reports = () => {
     summaryStats,
     isLoading,
   } = useReportsData();
+
+  const handleExportDetailed = async () => {
+    setIsExporting(true);
+    try {
+      const entries = await generateTimeReport();
+      exportTimeReportToCSV(entries);
+      toast({
+        title: "Eksport zakończony",
+        description: "Raport czasu pracy został pobrany",
+      });
+    } catch (error) {
+      toast({
+        title: "Błąd eksportu",
+        description: "Nie udało się wygenerować raportu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportByProject = async () => {
+    setIsExporting(true);
+    try {
+      const entries = await generateTimeReport();
+      exportTimeReportByProjectToCSV(entries);
+      toast({
+        title: "Eksport zakończony",
+        description: "Raport kosztów projektów został pobrany",
+      });
+    } catch (error) {
+      toast({
+        title: "Błąd eksportu",
+        description: "Nie udało się wygenerować raportu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -87,13 +139,34 @@ const Reports = () => {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-            <BarChart3 className="h-6 w-6 text-primary-foreground" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <BarChart3 className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Raporty i Statystyki</h1>
+              <p className="text-muted-foreground">Przegląd produktywności zespołu i aktywności klientów</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Raporty i Statystyki</h1>
-            <p className="text-muted-foreground">Przegląd produktywności zespołu i aktywności klientów</p>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleExportDetailed}
+              disabled={isExporting}
+              className="gap-2"
+            >
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+              Eksport szczegółowy
+            </Button>
+            <Button 
+              onClick={handleExportByProject}
+              disabled={isExporting}
+              className="gap-2"
+            >
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Eksport projektów
+            </Button>
           </div>
         </div>
 
