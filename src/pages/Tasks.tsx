@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import TaskItem from "@/components/dashboard/TaskItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -10,97 +11,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, LayoutGrid, List, CalendarDays, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const allTasks = [
-  {
-    id: "1",
-    title: "Przygotowanie prezentacji brandingu",
-    status: "in_progress" as const,
-    priority: "high" as const,
-    dueDate: "Dziś",
-    assignee: "Anna K.",
-    comments: 3,
-    projectName: "Rebranding Klient ABC",
-  },
-  {
-    id: "2",
-    title: "Post Instagram - promocja świąteczna",
-    status: "review" as const,
-    priority: "urgent" as const,
-    dueDate: "Jutro",
-    attachments: 2,
-    projectName: "Kampania Social Media",
-  },
-  {
-    id: "3",
-    title: "Wdrożenie strony głównej",
-    status: "todo" as const,
-    priority: "medium" as const,
-    dueDate: "12 sty",
-    assignee: "Piotr N.",
-    projectName: "Strona WWW - XYZ Corp",
-  },
-  {
-    id: "4",
-    title: "Akceptacja kolorystyki",
-    status: "review" as const,
-    priority: "high" as const,
-    dueDate: "10 sty",
-    comments: 5,
-    projectName: "Rebranding Klient ABC",
-  },
-  {
-    id: "5",
-    title: "Projekt logo - warianty",
-    status: "completed" as const,
-    priority: "high" as const,
-    dueDate: "8 sty",
-    attachments: 4,
-    projectName: "Rebranding Klient ABC",
-  },
-  {
-    id: "6",
-    title: "Copywriting dla landing page",
-    status: "todo" as const,
-    priority: "low" as const,
-    dueDate: "20 sty",
-    projectName: "Strona WWW - XYZ Corp",
-  },
-  {
-    id: "7",
-    title: "Sesja zdjęciowa produktowa",
-    status: "todo" as const,
-    priority: "medium" as const,
-    dueDate: "18 sty",
-    assignee: "Tomek W.",
-    projectName: "Kampania Social Media",
-  },
-  {
-    id: "8",
-    title: "Projekt banerów reklamowych",
-    status: "in_progress" as const,
-    priority: "medium" as const,
-    dueDate: "15 sty",
-    assignee: "Ewa S.",
-    projectName: "Materiały reklamowe Q1",
-  },
-];
+import { useClientRequests, ClientRequest } from "@/hooks/useClientRequests";
+import { TaskCalendar } from "@/components/calendar/TaskCalendar";
+import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColumns = [
-  { id: "todo", label: "Do zrobienia", color: "bg-slate-500" },
+  { id: "pending", label: "Oczekujące", color: "bg-amber-500" },
   { id: "in_progress", label: "W trakcie", color: "bg-blue-500" },
-  { id: "review", label: "Do akceptacji", color: "bg-amber-500" },
   { id: "completed", label: "Zakończone", color: "bg-emerald-500" },
+  { id: "cancelled", label: "Anulowane", color: "bg-slate-500" },
 ];
 
+const priorityMap: Record<string, string> = {
+  low: "Niski",
+  normal: "Normalny",
+  high: "Wysoki",
+  urgent: "Pilny",
+};
+
 const Tasks = () => {
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [selectedTask, setSelectedTask] = useState<ClientRequest | null>(null);
+  const { requests, isLoading, updateRequest } = useClientRequests();
+  const { toast } = useToast();
 
-  const filteredTasks = allTasks.filter((task) => {
+  const filteredTasks = requests.filter((task) => {
     const matchesSearch = task.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -113,14 +52,48 @@ const Tasks = () => {
     return filteredTasks.filter((task) => task.status === status);
   };
 
+  const handleUpdateDeadline = (taskId: string, newDeadline: string) => {
+    updateRequest({ id: taskId, deadline: newDeadline });
+    toast({
+      title: "Termin zaktualizowany",
+      description: `Nowy termin: ${newDeadline}`,
+    });
+  };
+
+  // Convert ClientRequest to TaskItem format for compatibility
+  const convertToTaskItem = (task: ClientRequest) => ({
+    id: task.id,
+    title: task.title,
+    status: task.status === "pending" ? "todo" as const 
+      : task.status === "in_progress" ? "in_progress" as const 
+      : task.status === "completed" ? "completed" as const 
+      : "todo" as const,
+    priority: task.priority === "urgent" ? "urgent" as const 
+      : task.priority === "high" ? "high" as const 
+      : task.priority === "low" ? "low" as const 
+      : "medium" as const,
+    dueDate: task.deadline || undefined,
+    assignee: task.assigned_member?.name,
+    projectName: task.category?.name,
+  });
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Zadania">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout
       title="Zadania"
       showNewButton
       newButtonLabel="Nowe zadanie"
     >
-      <div className="space-y-6">
-        {/* Filters */}
+      <Tabs defaultValue="kanban" className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="relative flex-1 sm:w-64">
@@ -140,32 +113,30 @@ const Tasks = () => {
                 <SelectItem value="all">Wszystkie</SelectItem>
                 <SelectItem value="urgent">Pilne</SelectItem>
                 <SelectItem value="high">Wysoki</SelectItem>
-                <SelectItem value="medium">Średni</SelectItem>
+                <SelectItem value="normal">Normalny</SelectItem>
                 <SelectItem value="low">Niski</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === "kanban" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("kanban")}
-            >
+          <TabsList>
+            <TabsTrigger value="kanban" className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4" />
               Kanban
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
+            </TabsTrigger>
+            <TabsTrigger value="list" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
               Lista
-            </Button>
-          </div>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Kalendarz
+            </TabsTrigger>
+          </TabsList>
         </div>
 
         {/* Kanban View */}
-        {viewMode === "kanban" && (
+        <TabsContent value="kanban">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 auto-rows-max">
             {statusColumns.map((column) => {
               const tasks = getTasksByStatus(column.id);
@@ -188,7 +159,13 @@ const Tasks = () => {
                   </div>
                   <div className="space-y-3">
                     {tasks.map((task) => (
-                      <TaskItem key={task.id} {...task} />
+                      <div
+                        key={task.id}
+                        onClick={() => setSelectedTask(task)}
+                        className="cursor-pointer"
+                      >
+                        <TaskItem {...convertToTaskItem(task)} />
+                      </div>
                     ))}
                     {tasks.length === 0 && (
                       <p className="py-4 text-center text-sm text-muted-foreground">
@@ -200,13 +177,19 @@ const Tasks = () => {
               );
             })}
           </div>
-        )}
+        </TabsContent>
 
         {/* List View */}
-        {viewMode === "list" && (
+        <TabsContent value="list">
           <div className="space-y-3">
             {filteredTasks.map((task) => (
-              <TaskItem key={task.id} {...task} />
+              <div
+                key={task.id}
+                onClick={() => setSelectedTask(task)}
+                className="cursor-pointer"
+              >
+                <TaskItem {...convertToTaskItem(task)} />
+              </div>
             ))}
             {filteredTasks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -216,8 +199,37 @@ const Tasks = () => {
               </div>
             )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        {/* Calendar View */}
+        <TabsContent value="calendar">
+          <TaskCalendar
+            requests={filteredTasks}
+            onUpdateDeadline={handleUpdateDeadline}
+            onTaskClick={setSelectedTask}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Task Details Dialog */}
+      {selectedTask && (
+        <RequestDetailsDialog
+          request={selectedTask}
+          open={!!selectedTask}
+          onOpenChange={(open) => !open && setSelectedTask(null)}
+          onStatusChange={(id, status) => {
+            updateRequest({ id, status });
+            setSelectedTask(null);
+          }}
+          onDeadlineChange={(id, deadline) => {
+            updateRequest({ id, deadline });
+          }}
+          onAssign={(id, assignedTo) => {
+            updateRequest({ id, assigned_to: assignedTo });
+          }}
+          isTeamMember
+        />
+      )}
     </DashboardLayout>
   );
 };
