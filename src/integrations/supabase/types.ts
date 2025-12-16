@@ -444,6 +444,30 @@ export type Database = {
           },
         ]
       }
+      project_members: {
+        Row: {
+          id: string
+          is_active: boolean
+          joined_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       project_template_items: {
         Row: {
           created_at: string
@@ -697,6 +721,33 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      team_member_rates: {
+        Row: {
+          currency: string
+          hourly_rate: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          currency?: string
+          hourly_rate?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          currency?: string
+          hourly_rate?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
         }
         Relationships: []
       }

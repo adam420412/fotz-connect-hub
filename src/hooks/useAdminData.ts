@@ -4,10 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { AppRole } from "@/hooks/useAuth";
 import { logActivity } from "@/hooks/useActivityLogger";
 
-interface UserWithRole {
+export interface UserWithRole {
   id: string;
   email: string;
   full_name: string | null;
+  avatar_url: string | null;
   company_name: string | null;
   is_active: boolean;
   role: AppRole | null;
@@ -67,6 +68,7 @@ export function useAdminData() {
       id: profile.id,
       email: profile.email,
       full_name: profile.full_name,
+      avatar_url: profile.avatar_url,
       company_name: profile.company_name,
       is_active: profile.is_active ?? true,
       role: rolesMap.get(profile.id) as AppRole | null,

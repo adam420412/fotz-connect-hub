@@ -12,9 +12,12 @@ import {
   TrendingUp,
   Trash2,
   Loader2,
+  Circle,
+  DollarSign,
 } from "lucide-react";
 import { useTimeTracking, formatDuration, TimeEntry } from "@/hooks/useTimeTracking";
-import { format, isToday, isYesterday, startOfDay, isSameDay } from "date-fns";
+import { useTeamMemberRates } from "@/hooks/useTeamMemberRates";
+import { format, isToday, isYesterday, startOfDay } from "date-fns";
 import { pl } from "date-fns/locale";
 
 const TimeTracking = () => {
@@ -34,6 +37,8 @@ const TimeTracking = () => {
     todayTotal,
     weekTotal,
   } = useTimeTracking();
+
+  const { myRate } = useTeamMemberRates();
 
   // Update elapsed time every second when timer is running
   useEffect(() => {
@@ -93,17 +98,35 @@ const TimeTracking = () => {
     return entries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
   };
 
+  // Calculate earnings
+  const calculateEarnings = (minutes: number) => {
+    if (!myRate) return null;
+    const hours = minutes / 60;
+    return (hours * myRate.hourly_rate).toFixed(2);
+  };
+
+  const todayEarnings = calculateEarnings(todayTotal + Math.floor(elapsedTime / 60));
+  const weekEarnings = calculateEarnings(weekTotal + Math.floor(elapsedTime / 60));
+
   return (
     <DashboardLayout title="Śledzenie Czasu">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Śledzenie Czasu</h1>
-          <p className="text-muted-foreground">Monitoruj czas pracy nad projektami</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Śledzenie Czasu</h1>
+            <p className="text-muted-foreground">Monitoruj czas pracy nad projektami</p>
+          </div>
+          {runningEntry && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-destructive/10 border border-destructive/20">
+              <Circle className="h-3 w-3 fill-destructive text-destructive animate-pulse" />
+              <span className="text-sm font-medium text-destructive">Nagrywanie</span>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -113,6 +136,11 @@ const TimeTracking = () => {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{formatDuration(todayTotal + Math.floor(elapsedTime / 60))}</p>
+              {todayEarnings && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {todayEarnings} {myRate?.currency}
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -124,6 +152,11 @@ const TimeTracking = () => {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{formatDuration(weekTotal + Math.floor(elapsedTime / 60))}</p>
+              {weekEarnings && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {weekEarnings} {myRate?.currency}
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -139,10 +172,28 @@ const TimeTracking = () => {
               </p>
             </CardContent>
           </Card>
+          {myRate && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Twoja stawka
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {myRate.hourly_rate} {myRate.currency}/h
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Timer */}
-        <Card className={runningEntry ? "border-primary/50 bg-primary/5" : ""}>
+        <Card className={runningEntry ? "border-destructive/50 bg-destructive/5 relative overflow-hidden" : ""}>
+          {runningEntry && (
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-destructive via-destructive/70 to-destructive animate-pulse" />
+          )}
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <Input
@@ -160,7 +211,10 @@ const TimeTracking = () => {
                 className="sm:w-48"
               />
               <div className="flex items-center gap-3">
-                <span className={`font-mono text-xl font-bold ${runningEntry ? "text-primary" : "text-muted-foreground"}`}>
+                {runningEntry && (
+                  <Circle className="h-3 w-3 fill-destructive text-destructive animate-pulse" />
+                )}
+                <span className={`font-mono text-xl font-bold ${runningEntry ? "text-destructive" : "text-muted-foreground"}`}>
                   {formatElapsedTime(elapsedTime)}
                 </span>
                 {runningEntry ? (

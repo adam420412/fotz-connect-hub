@@ -23,7 +23,10 @@ export type ActivityActionType =
   | "user_activated"
   | "user_deactivated"
   | "team_member_assigned"
-  | "invitation_create";
+  | "invitation_create"
+  | "project_join"
+  | "project_leave"
+  | "rate_update";
 
 export type ActivityEntityType = 
   | "file"
@@ -34,7 +37,9 @@ export type ActivityEntityType =
   | "post"
   | "user"
   | "client"
-  | "invitation";
+  | "invitation"
+  | "project_member"
+  | "team_member_rate";
 
 export async function logActivity(
   actionType: ActivityActionType,
