@@ -232,6 +232,75 @@ export type Database = {
         }
         Relationships: []
       }
+      google_calendar_events: {
+        Row: {
+          google_event_id: string
+          id: string
+          last_synced_at: string
+          local_entity_id: string
+          local_entity_type: string
+          user_id: string
+        }
+        Insert: {
+          google_event_id: string
+          id?: string
+          last_synced_at?: string
+          local_entity_id: string
+          local_entity_type: string
+          user_id: string
+        }
+        Update: {
+          google_event_id?: string
+          id?: string
+          last_synced_at?: string
+          local_entity_id?: string
+          local_entity_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      google_calendar_integrations: {
+        Row: {
+          access_token: string
+          calendar_id: string | null
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          refresh_token: string
+          sync_enabled: boolean
+          sync_token: string | null
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          refresh_token: string
+          sync_enabled?: boolean
+          sync_token?: string | null
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          refresh_token?: string
+          sync_enabled?: boolean
+          sync_token?: string | null
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           company_name: string | null
