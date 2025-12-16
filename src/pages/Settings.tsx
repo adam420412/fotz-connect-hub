@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryManagement } from "@/components/settings/CategoryManagement";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { useAuth } from "@/hooks/useAuth";
 import {
   User,
   Bell,
@@ -23,11 +25,14 @@ import {
   Moon,
   Monitor,
   Command,
+  Calendar,
 } from "lucide-react";
 
 const Settings = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
+  const googleCalendar = useGoogleCalendar(user?.id);
   const [slackWebhook, setSlackWebhook] = useState("");
   const [slackConnected, setSlackConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -358,6 +363,106 @@ const Settings = () => {
                     <>
                       <Link2 className="h-4 w-4" />
                       Połącz ze Slackiem
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Google Calendar Integration */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+              <Calendar className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Google Calendar</h2>
+              <p className="text-sm text-muted-foreground">Synchronizuj zadania i wydarzenia</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+            {googleCalendar.isLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Ładowanie...
+              </div>
+            ) : googleCalendar.isConnected ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Połączono z Google Calendar</p>
+                    <p className="text-sm text-muted-foreground">
+                      {googleCalendar.integration?.last_sync_at
+                        ? `Ostatnia synchronizacja: ${new Date(googleCalendar.integration.last_sync_at).toLocaleString("pl-PL")}`
+                        : "Oczekuje na pierwszą synchronizację"}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={googleCalendar.disconnect}>
+                    Rozłącz
+                  </Button>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="gcal-sync" className="font-normal text-foreground">
+                      Automatyczna synchronizacja
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Synchronizuj zadania i wydarzenia z kalendarzem
+                    </p>
+                  </div>
+                  <Switch
+                    id="gcal-sync"
+                    checked={googleCalendar.integration?.sync_enabled ?? true}
+                    onCheckedChange={(checked) => googleCalendar.toggleSync(checked)}
+                  />
+                </div>
+
+                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+                  <p className="text-sm font-medium text-foreground">Co jest synchronizowane:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Przypisane zadania z deadline'ami</li>
+                    <li>• Wydarzenia zespołowe (urlopy, spotkania)</li>
+                    <li>• Przypomnienia 24h i 1h przed terminem</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm text-foreground">
+                      Połącz swoje konto Google, aby synchronizować:
+                    </p>
+                    <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                      <li>Zadania z terminami do kalendarza</li>
+                      <li>Wydarzenia zespołowe i urlopy</li>
+                      <li>Automatyczne przypomnienia</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <Button
+                  variant="gradient"
+                  onClick={googleCalendar.connect}
+                  disabled={googleCalendar.isConnecting}
+                  className="gap-2"
+                >
+                  {googleCalendar.isConnecting ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Łączenie...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-4 w-4" />
+                      Połącz z Google Calendar
                     </>
                   )}
                 </Button>
