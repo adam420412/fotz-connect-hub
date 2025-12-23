@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.google-calendar-webhook]
 verify_jwt = false
+
+[functions.create-admin-user]
+verify_jwt = false
