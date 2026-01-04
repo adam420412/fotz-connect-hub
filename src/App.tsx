@@ -66,7 +66,7 @@ const App = () => (
                 <Route path="/reports" element={<ProtectedRoute requireAdmin><Reports /></ProtectedRoute>} />
                 <Route path="/team-calendar" element={<ProtectedRoute requireTeamMember><TeamCalendar /></ProtectedRoute>} />
                 <Route path="/templates" element={<ProtectedRoute requireTeamMember><ProjectTemplates /></ProtectedRoute>} />
-                <Route path="/crm" element={<ProtectedRoute requireAdmin><CRM /></ProtectedRoute>} />
+                <Route path="/crm" element={<ProtectedRoute requireTeamMember><CRM /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
