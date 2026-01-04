@@ -24,6 +24,7 @@ import {
   BarChart3,
   Calendar,
   LayoutTemplate,
+  Contact,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -65,6 +66,7 @@ const Sidebar = () => {
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
     ...(isAdmin ? [
+      { icon: Contact, label: "CRM", href: "/crm" },
       { icon: Shield, label: "Panel Admina", href: "/admin" },
       { icon: BarChart3, label: "Raporty", href: "/reports" },
     ] : []),
