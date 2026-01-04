@@ -16,15 +16,72 @@ interface LeadPayload {
     company?: string;
     source?: string;
     notes?: string;
-    // For bookings
     booking_date?: string;
     booking_time?: string;
     service_type?: string;
   };
 }
 
+// Send notification to Discord/Slack webhook
+async function sendWebhookNotification(type: "lead" | "booking", data: Record<string, unknown>) {
+  const webhookUrl = Deno.env.get("DISCORD_WEBHOOK_URL") || Deno.env.get("SLACK_WEBHOOK_URL");
+  
+  if (!webhookUrl) {
+    console.log("No webhook URL configured, skipping notification");
+    return;
+  }
+
+  const isDiscord = webhookUrl.includes("discord.com");
+  const emoji = type === "lead" ? "🎯" : "📅";
+  const title = type === "lead" ? "Nowy Lead!" : "Nowa Rezerwacja!";
+  
+  let message = "";
+  if (type === "lead") {
+    message = `**${data.name}**\n📧 ${data.email}${data.phone ? `\n📱 ${data.phone}` : ""}${data.company ? `\n🏢 ${data.company}` : ""}\n📍 Źródło: ${data.source || "fotz.pl"}`;
+  } else {
+    message = `**${data.name}**\n📧 ${data.email}${data.phone ? `\n📱 ${data.phone}` : ""}\n📅 ${data.booking_date} o ${data.booking_time}\n🔧 ${data.service_type || "konsultacja"}`;
+  }
+
+  try {
+    if (isDiscord) {
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          embeds: [{
+            title: `${emoji} ${title}`,
+            description: message,
+            color: type === "lead" ? 0x22c55e : 0x3b82f6,
+            timestamp: new Date().toISOString(),
+          }],
+        }),
+      });
+    } else {
+      // Slack format
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          blocks: [
+            {
+              type: "header",
+              text: { type: "plain_text", text: `${emoji} ${title}`, emoji: true },
+            },
+            {
+              type: "section",
+              text: { type: "mrkdwn", text: message.replace(/\*\*/g, "*") },
+            },
+          ],
+        }),
+      });
+    }
+    console.log("Webhook notification sent successfully");
+  } catch (error) {
+    console.error("Failed to send webhook notification:", error);
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -40,7 +97,6 @@ serve(async (req) => {
       },
     });
 
-    // Parse request body
     const payload: LeadPayload = await req.json();
     
     console.log("Received webhook payload:", JSON.stringify(payload));
@@ -54,7 +110,6 @@ serve(async (req) => {
 
     const { type, data } = payload;
 
-    // Validate required fields
     if (!data.name || !data.email) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: name and email are required" }),
@@ -63,7 +118,6 @@ serve(async (req) => {
     }
 
     if (type === "lead") {
-      // Insert lead
       const { data: lead, error: leadError } = await supabase
         .from("leads")
         .insert({
@@ -84,6 +138,9 @@ serve(async (req) => {
       }
 
       console.log("Lead created:", lead.id);
+      
+      // Send Discord/Slack notification
+      await sendWebhookNotification("lead", data);
 
       return new Response(
         JSON.stringify({
@@ -96,7 +153,6 @@ serve(async (req) => {
     } 
     
     if (type === "booking") {
-      // Validate booking-specific fields
       if (!data.booking_date || !data.booking_time) {
         return new Response(
           JSON.stringify({ error: "Missing required fields for booking: booking_date and booking_time" }),
@@ -104,7 +160,6 @@ serve(async (req) => {
         );
       }
 
-      // First, check if lead with this email exists
       let leadId: string | null = null;
       
       const { data: existingLead } = await supabase
@@ -116,7 +171,6 @@ serve(async (req) => {
       if (existingLead) {
         leadId = existingLead.id;
       } else {
-        // Create a new lead for this booking
         const { data: newLead, error: leadError } = await supabase
           .from("leads")
           .insert({
@@ -135,7 +189,6 @@ serve(async (req) => {
         }
       }
 
-      // Insert booking
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -160,7 +213,6 @@ serve(async (req) => {
 
       console.log("Booking created:", booking.id);
 
-      // Add to contact history if we have a lead
       if (leadId) {
         await supabase
           .from("contact_history")
@@ -172,6 +224,9 @@ serve(async (req) => {
             contact_date: new Date().toISOString(),
           });
       }
+
+      // Send Discord/Slack notification
+      await sendWebhookNotification("booking", data);
 
       return new Response(
         JSON.stringify({
