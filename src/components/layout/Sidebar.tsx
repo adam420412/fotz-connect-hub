@@ -41,6 +41,7 @@ const Sidebar = () => {
 
   const clientNav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+    { icon: LayoutDashboard, label: "Portal klienta", href: "/client-portal" },
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
@@ -52,6 +53,7 @@ const Sidebar = () => {
 
   const teamNav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+    { icon: LayoutDashboard, label: "Mój panel", href: "/employee-dashboard" },
     { icon: FolderKanban, label: "Projekty", href: "/projects" },
     { icon: CheckSquare, label: "Zadania", href: "/tasks" },
     { icon: FileBox, label: "Pliki", href: "/files" },
@@ -65,10 +67,11 @@ const Sidebar = () => {
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
+    { icon: Contact, label: "CRM", href: "/crm" },
     ...(isAdmin ? [
-      { icon: Contact, label: "CRM", href: "/crm" },
       { icon: Shield, label: "Panel Admina", href: "/admin" },
       { icon: BarChart3, label: "Raporty", href: "/reports" },
+      { icon: BarChart3, label: "KPI Dashboard", href: "/admin-kpi" },
     ] : []),
   ];
 

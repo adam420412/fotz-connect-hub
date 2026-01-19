@@ -16,7 +16,8 @@ import {
   Phone,
   Mail,
   Building,
-  Clock
+  Clock,
+  Download
 } from "lucide-react";
 import { useCRM } from "@/hooks/useCRM";
 import LeadsTable from "@/components/crm/LeadsTable";
@@ -25,6 +26,8 @@ import BookingsTable from "@/components/crm/BookingsTable";
 import ContactHistoryList from "@/components/crm/ContactHistoryList";
 import LeadDialog from "@/components/crm/LeadDialog";
 import DealDialog from "@/components/crm/DealDialog";
+import { exportLeadsToCSV } from "@/utils/csvExport";
+import { useToast } from "@/hooks/use-toast";
 
 const CRM = () => {
   const { leads, deals, bookings, contactHistory, stats, isLoading } = useCRM();
@@ -32,6 +35,23 @@ const CRM = () => {
   const [showLeadDialog, setShowLeadDialog] = useState(false);
   const [showDealDialog, setShowDealDialog] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleExportCSV = () => {
+    if (leads.length === 0) {
+      toast({
+        title: "Brak danych",
+        description: "Nie ma leadów do eksportu",
+        variant: "destructive",
+      });
+      return;
+    }
+    exportLeadsToCSV(leads);
+    toast({
+      title: "Eksport zakończony",
+      description: `Wyeksportowano ${leads.length} leadów do pliku CSV`,
+    });
+  };
 
   const filteredLeads = leads.filter(
     (lead) =>
@@ -62,6 +82,10 @@ const CRM = () => {
             <p className="text-muted-foreground">Zarządzanie leadami i sprzedażą</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Eksport CSV
+            </Button>
             <Button onClick={() => setShowLeadDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Nowy lead
