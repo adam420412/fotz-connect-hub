@@ -35,7 +35,7 @@ const AIAssistant = () => {
 
   return (
     <DashboardLayout title="Asystent AI">
-      <div className="flex h-[calc(100vh-12rem)] flex-col rounded-xl border border-border bg-card overflow-hidden">
+      <div className="flex h-[calc(100vh-12rem)] flex-col rounded-xl border border-border bg-card overflow-hidden relative z-0">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-3">
