@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 export interface RequestComment {
   id: string;
@@ -34,7 +35,27 @@ export function useRequestComments(requestId: string | null) {
     enabled: !!requestId,
   });
 
-  // Subscribe to realtime updates
+  // Handle realtime notification
+  const handleRealtimeUpdate = useCallback((payload: any) => {
+    queryClient.invalidateQueries({ queryKey: ["request-comments", requestId] });
+    
+    // Show notification for new comments from others
+    if (payload.eventType === "INSERT" && payload.new) {
+      const newComment = payload.new as RequestComment;
+      
+      // Get current user to avoid self-notification
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user && newComment.user_id !== user.id) {
+          toast({
+            title: "💬 Nowy komentarz",
+            description: `${newComment.user_name}: ${newComment.content.slice(0, 50)}${newComment.content.length > 50 ? '...' : ''}`,
+          });
+        }
+      });
+    }
+  }, [requestId, queryClient, toast]);
+
+  // Subscribe to realtime updates with notifications
   useEffect(() => {
     if (!requestId) return;
 
@@ -48,16 +69,14 @@ export function useRequestComments(requestId: string | null) {
           table: "request_comments",
           filter: `request_id=eq.${requestId}`,
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["request-comments", requestId] });
-        }
+        handleRealtimeUpdate
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [requestId, queryClient]);
+  }, [requestId, handleRealtimeUpdate]);
 
   const addComment = useMutation({
     mutationFn: async ({ content, userName, userRole }: { content: string; userName: string; userRole: string }) => {
@@ -80,8 +99,12 @@ export function useRequestComments(requestId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["request-comments", requestId] });
+      logActivity("comment_add", "request", requestId!, null, {
+        comment_id: data.id,
+        preview: data.content.slice(0, 50),
+      });
     },
     onError: (error: any) => {
       toast({
@@ -101,10 +124,13 @@ export function useRequestComments(requestId: string | null) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, commentId) => {
       queryClient.invalidateQueries({ queryKey: ["request-comments", requestId] });
       toast({
         title: "Komentarz usunięty",
+      });
+      logActivity("comment_delete", "request", requestId!, null, {
+        comment_id: commentId,
       });
     },
   });

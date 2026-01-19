@@ -20,6 +20,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   PlusCircle,
   MessageSquare,
   FileText,
@@ -40,6 +46,7 @@ import {
   Calendar,
   AlertTriangle,
   Tag,
+  Zap,
 } from "lucide-react";
 import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
@@ -54,6 +61,7 @@ import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 import RequestKanban from "@/components/requests/RequestKanban";
 import RequestCalendar from "@/components/requests/RequestCalendar";
 import { cn } from "@/lib/utils";
+import { QuickTaskDialog } from "@/components/tasks/QuickTaskDialog";
 
 const requestTypeConfig: Record<string, { label: string; icon: React.ReactNode }> = {
   task: { label: "Nowe zadanie", icon: <CheckSquare className="h-4 w-4" /> },
@@ -235,10 +243,20 @@ const NewRequest = () => {
             </div>
           </div>
 
-          <Button variant="gradient" onClick={() => setIsDialogOpen(true)} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Nowe zadanie
-          </Button>
+          <div className="flex items-center gap-2">
+            <QuickTaskDialog
+              trigger={
+                <Button variant="secondary" className="gap-2">
+                  <Zap className="h-4 w-4" />
+                  Szybkie zadanie
+                </Button>
+              }
+            />
+            <Button variant="gradient" onClick={() => setIsDialogOpen(true)} className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Pełny brief
+            </Button>
+          </div>
         </div>
 
         {/* Filters & Sort */}
