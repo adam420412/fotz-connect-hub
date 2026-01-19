@@ -119,6 +119,7 @@ export type Database = {
           description: string | null
           id: string
           priority: string | null
+          project_id: string | null
           related_file_id: string | null
           reminder_sent: boolean
           request_type: string
@@ -135,6 +136,7 @@ export type Database = {
           description?: string | null
           id?: string
           priority?: string | null
+          project_id?: string | null
           related_file_id?: string | null
           reminder_sent?: boolean
           request_type: string
@@ -151,6 +153,7 @@ export type Database = {
           description?: string | null
           id?: string
           priority?: string | null
+          project_id?: string | null
           related_file_id?: string | null
           reminder_sent?: boolean
           request_type?: string
@@ -171,6 +174,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "task_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {

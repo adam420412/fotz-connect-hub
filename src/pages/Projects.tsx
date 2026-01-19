@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Search, Grid3X3, List, BarChart3, Users, Calendar, Trash2, Loader2, Clock, CheckSquare } from "lucide-react";
+import { Search, Grid3X3, List, BarChart3, Users, Calendar, Trash2, Loader2, Clock, Eye } from "lucide-react";
 import { ProjectMembersDialog } from "@/components/projects/ProjectMembersDialog";
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
@@ -43,6 +44,7 @@ const statusConfig = {
 };
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [clientFilter, setClientFilter] = useState<string>("all");
@@ -291,7 +293,16 @@ const Projects = () => {
                         </div>
                       )}
 
-                      <div className="flex justify-end pt-2">
+                      <div className="flex justify-between pt-2 gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-2"
+                          onClick={() => navigate(`/projects/${project.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          Szczegóły
+                        </Button>
                         <ProjectMembersDialog
                           projectId={project.id}
                           projectName={project.name}

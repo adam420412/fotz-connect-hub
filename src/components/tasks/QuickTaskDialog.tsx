@@ -20,6 +20,7 @@ import {
 import { Plus, Loader2 } from "lucide-react";
 import { useTaskCategories } from "@/hooks/useTaskCategories";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useProjects } from "@/hooks/useProjects";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -28,9 +29,10 @@ import { logActivity } from "@/hooks/useActivityLogger";
 interface QuickTaskDialogProps {
   trigger?: React.ReactNode;
   defaultStatus?: string;
+  defaultProjectId?: string;
 }
 
-export function QuickTaskDialog({ trigger, defaultStatus = "pending" }: QuickTaskDialogProps) {
+export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultProjectId }: QuickTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [title, setTitle] = useState("");
@@ -39,9 +41,11 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending" }: QuickTas
   const [categoryId, setCategoryId] = useState<string>("");
   const [assignedTo, setAssignedTo] = useState<string>("");
   const [deadline, setDeadline] = useState<string>("");
+  const [projectId, setProjectId] = useState<string>(defaultProjectId || "");
 
   const { categories } = useTaskCategories();
   const { teamMembers } = useTeamMembers();
+  const { projects } = useProjects();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -52,6 +56,7 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending" }: QuickTas
     setCategoryId("");
     setAssignedTo("");
     setDeadline("");
+    setProjectId(defaultProjectId || "");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +80,7 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending" }: QuickTas
           deadline: deadline || null,
           status: defaultStatus,
           client_id: user.id,
+          project_id: projectId || null,
         })
         .select()
         .single();
@@ -210,6 +216,23 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending" }: QuickTas
                 onChange={(e) => setDeadline(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Projekt</Label>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Przypisz do projektu..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Brak projektu</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

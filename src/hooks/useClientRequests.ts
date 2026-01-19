@@ -18,6 +18,7 @@ export interface ClientRequest {
   deadline: string | null;
   reminder_sent: boolean;
   category_id: string | null;
+  project_id: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -40,6 +41,7 @@ export interface CreateRequestData {
   request_type: "task" | "feedback" | "comment" | "other";
   related_file_id?: string;
   priority?: "low" | "normal" | "high" | "urgent";
+  project_id?: string;
 }
 
 export interface RequestStats {
@@ -99,6 +101,7 @@ export function useClientRequests() {
         .insert({
           ...requestData,
           client_id: user.id,
+          project_id: requestData.project_id || null,
         })
         .select()
         .single();
