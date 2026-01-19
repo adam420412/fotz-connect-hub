@@ -12,27 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, LayoutGrid, List, CalendarDays, Loader2, Zap } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search, LayoutGrid, List, CalendarDays, Loader2, Zap } from "lucide-react";
 import { useClientRequests, ClientRequest } from "@/hooks/useClientRequests";
 import { TaskCalendar } from "@/components/calendar/TaskCalendar";
 import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { QuickTaskDialog } from "@/components/tasks/QuickTaskDialog";
-
-const statusColumns = [
-  { id: "pending", label: "Oczekujące", color: "bg-amber-500" },
-  { id: "in_progress", label: "W trakcie", color: "bg-blue-500" },
-  { id: "completed", label: "Zakończone", color: "bg-emerald-500" },
-  { id: "cancelled", label: "Anulowane", color: "bg-slate-500" },
-];
-
-const priorityMap: Record<string, string> = {
-  low: "Niski",
-  normal: "Normalny",
-  high: "Wysoki",
-  urgent: "Pilny",
-};
+import { TaskKanbanBoard } from "@/components/tasks/TaskKanbanBoard";
 
 const Tasks = () => {
   const navigate = useNavigate();
@@ -55,15 +41,19 @@ const Tasks = () => {
     return matchesSearch && matchesPriority;
   });
 
-  const getTasksByStatus = (status: string) => {
-    return filteredTasks.filter((task) => task.status === status);
-  };
-
   const handleUpdateDeadline = (taskId: string, newDeadline: string) => {
     updateRequest({ id: taskId, deadline: newDeadline });
     toast({
       title: "Termin zaktualizowany",
       description: `Nowy termin: ${newDeadline}`,
+    });
+  };
+
+  const handleStatusChange = (taskId: string, newStatus: string) => {
+    updateRequest({ id: taskId, status: newStatus as ClientRequest["status"] });
+    toast({
+      title: "Status zaktualizowany",
+      description: "Zadanie zostało przeniesione",
     });
   };
 
@@ -153,52 +143,13 @@ const Tasks = () => {
           </TabsList>
         </div>
 
+        {/* Kanban View with Drag & Drop */}
         <TabsContent value="kanban">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 auto-rows-max">
-            {statusColumns.map((column) => {
-              const tasks = getTasksByStatus(column.id);
-              return (
-                <div
-                  key={column.id}
-                  className="rounded-xl border border-border bg-card/50 p-4"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={cn("h-2 w-2 rounded-full", column.color)} />
-                      <h3 className="font-medium">{column.label}</h3>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                        {tasks.length}
-                      </span>
-                    </div>
-                    <QuickTaskDialog
-                      defaultStatus={column.id}
-                      trigger={
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      }
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    {tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        onClick={() => setSelectedTask(task)}
-                        className="cursor-pointer"
-                      >
-                        <TaskItem {...convertToTaskItem(task)} />
-                      </div>
-                    ))}
-                    {tasks.length === 0 && (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        Brak zadań
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <TaskKanbanBoard
+            tasks={filteredTasks}
+            onStatusChange={handleStatusChange}
+            onTaskClick={setSelectedTask}
+          />
         </TabsContent>
 
         {/* List View */}
