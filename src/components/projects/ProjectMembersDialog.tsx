@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, UserPlus, UserMinus, Clock, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Users, UserPlus, UserMinus, Clock, Loader2, X } from "lucide-react";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { useTimeTracking, formatDuration } from "@/hooks/useTimeTracking";
 import { useTeamMemberRates } from "@/hooks/useTeamMemberRates";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProjectMembersDialogProps {
   projectId: string;
@@ -22,19 +32,41 @@ interface ProjectMembersDialogProps {
 
 export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersDialogProps) {
   const [open, setOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
   const { 
     members, 
     isLoading, 
     joinProject, 
     leaveProject, 
+    addMemberToProject,
+    removeMemberFromProject,
     isJoining, 
     isLeaving,
+    isAdding,
     isProjectMember 
   } = useProjectMembers(projectId);
   const { entries } = useTimeTracking();
   const { getRateForUser, calculateEarnings } = useTeamMemberRates();
+  const { teamMembers } = useTeamMembers();
 
   const isMember = isProjectMember(projectId);
+
+  // Get profiles for members
+  const { data: memberProfiles = [] } = useQuery({
+    queryKey: ["member-profiles", members.map(m => m.user_id)],
+    queryFn: async () => {
+      if (members.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .in("id", members.map(m => m.user_id));
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: members.length > 0,
+  });
 
   // Calculate time per member for this project
   const memberTimeMap = new Map<string, number>();
@@ -45,13 +77,26 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
       memberTimeMap.set(e.user_id, current + (e.duration_minutes || 0));
     });
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getProfile = (userId: string) => {
+    return memberProfiles.find(p => p.id === userId);
+  };
+
+  const getInitials = (name: string | null, email?: string) => {
+    if (name) {
+      return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    return email?.slice(0, 2).toUpperCase() || "??";
+  };
+
+  // Filter team members not already in project
+  const availableMembers = teamMembers.filter(
+    tm => !members.some(m => m.user_id === tm.id)
+  );
+
+  const handleAddMember = () => {
+    if (!selectedUserId) return;
+    addMemberToProject({ projectId, userId: selectedUserId, projectName });
+    setSelectedUserId("");
   };
 
   return (
@@ -70,7 +115,33 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
 
         <div className="space-y-4">
           {/* Join/Leave button */}
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2 flex-1">
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Dodaj członka..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name} ({member.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                onClick={handleAddMember}
+                disabled={!selectedUserId || isAdding}
+              >
+                {isAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            
             {isMember ? (
               <Button
                 variant="destructive"
@@ -83,12 +154,12 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
                 ) : (
                   <UserMinus className="h-4 w-4 mr-2" />
                 )}
-                Opuść projekt
+                Opuść
               </Button>
             ) : (
               <Button
                 size="sm"
-                onClick={() => joinProject(projectId)}
+                onClick={() => joinProject(projectId, projectName)}
                 disabled={isJoining}
               >
                 {isJoining ? (
@@ -96,7 +167,7 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
                 ) : (
                   <UserPlus className="h-4 w-4 mr-2" />
                 )}
-                Dołącz do projektu
+                Dołącz
               </Button>
             )}
           </div>
@@ -111,8 +182,9 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
               Brak członków w tym projekcie
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto">
               {members.map((member) => {
+                const profile = getProfile(member.user_id);
                 const totalMinutes = memberTimeMap.get(member.user_id) || 0;
                 const earnings = calculateEarnings(member.user_id, totalMinutes);
                 const rate = getRateForUser(member.user_id);
@@ -123,14 +195,15 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
                     className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card"
                   >
                     <Avatar className="h-10 w-10">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        {getInitials(member.user_id.slice(0, 8))}
+                        {getInitials(profile?.full_name || null, profile?.email)}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">
-                        {member.user_id.slice(0, 8)}...
+                        {profile?.full_name || profile?.email || member.user_id.slice(0, 8)}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
@@ -150,6 +223,15 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
                         </p>
                       </div>
                     )}
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeMemberFromProject({ projectId, userId: member.user_id })}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 );
               })}
