@@ -5,6 +5,15 @@ import { cn } from "@/lib/utils";
 import { ClientRequest } from "@/hooks/useClientRequests";
 import TaskItem from "@/components/dashboard/TaskItem";
 import { QuickTaskDialog } from "./QuickTaskDialog";
+import { notifyTaskStatusChange } from "@/utils/slackNotifications";
+import { supabase } from "@/integrations/supabase/client";
+
+const statusLabels: Record<string, string> = {
+  pending: "Oczekujące",
+  in_progress: "W trakcie",
+  completed: "Zakończone",
+  cancelled: "Anulowane",
+};
 
 const statusColumns = [
   { id: "pending", label: "Oczekujące", color: "bg-amber-500" },
@@ -40,7 +49,7 @@ export function TaskKanbanBoard({ tasks, onStatusChange, onTaskClick }: TaskKanb
     projectName: task.category?.name,
   });
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
     // Dropped outside a droppable area
@@ -57,6 +66,26 @@ export function TaskKanbanBoard({ tasks, onStatusChange, onTaskClick }: TaskKanb
     // Status changed
     if (destination.droppableId !== source.droppableId) {
       onStatusChange(draggableId, destination.droppableId);
+      
+      // Send Slack notification
+      const task = tasks.find(t => t.id === draggableId);
+      if (task) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", user.id)
+            .single();
+          
+          notifyTaskStatusChange(
+            task.title,
+            statusLabels[source.droppableId] || source.droppableId,
+            statusLabels[destination.droppableId] || destination.droppableId,
+            profile?.full_name || profile?.email || "Użytkownik"
+          );
+        }
+      }
     }
   };
 

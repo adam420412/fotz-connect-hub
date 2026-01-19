@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLogger";
 import { syncToGoogleCalendar } from "@/utils/googleCalendarSync";
+import { notifyTaskStatusChange, notifyNewTask } from "@/utils/slackNotifications";
 
 export interface ClientRequest {
   id: string;
@@ -105,7 +106,7 @@ export function useClientRequests() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["client-requests"] });
       toast({
         title: "Zadanie wysłane",
@@ -126,6 +127,21 @@ export function useClientRequests() {
             deadline: data.deadline,
           },
         });
+      }
+      // Get user profile for Slack notification
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .single();
+        
+        notifyNewTask(
+          variables.title,
+          profile?.full_name || profile?.email || "Użytkownik",
+          variables.priority
+        );
       }
     },
     onError: (error: any) => {
