@@ -16,13 +16,14 @@ import {
 import { Search, LayoutGrid, List, CalendarDays, Loader2, Zap, FolderOpen, GanttChart } from "lucide-react";
 import { useClientRequests, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjects } from "@/hooks/useProjects";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TaskCalendar } from "@/components/calendar/TaskCalendar";
 import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { QuickTaskDialog } from "@/components/tasks/QuickTaskDialog";
 import { TaskKanbanBoard } from "@/components/tasks/TaskKanbanBoard";
 import { BulkProjectAssignment } from "@/components/tasks/BulkProjectAssignment";
-import { ProjectGanttChart } from "@/components/projects/ProjectGanttChart";
+import { ProjectGanttChart, GanttTask } from "@/components/projects/ProjectGanttChart";
 
 const Tasks = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const Tasks = () => {
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const { requests, isLoading, updateRequest } = useClientRequests();
   const { projects } = useProjects();
+  const { teamMembers } = useTeamMembers();
   const { toast } = useToast();
 
   const handleNewTask = () => {
@@ -52,20 +54,46 @@ const Tasks = () => {
     return matchesSearch && matchesPriority && matchesProject;
   });
 
-  // Convert tasks to Gantt format
-  const ganttTasks = useMemo(() => {
-    return filteredTasks
-      .filter((task) => task.deadline)
-      .map((task) => ({
-        id: task.id,
-        title: task.title,
-        startDate: new Date(task.created_at),
-        endDate: new Date(task.deadline!),
-        status: task.status,
-        priority: task.priority,
-        assignee: task.assigned_member?.name,
-        projectName: projects.find((p) => p.id === task.project_id)?.name,
-      }));
+  // Convert tasks to Gantt format with dependencies
+  const ganttTasks: GanttTask[] = useMemo(() => {
+    const tasksWithDeadline = filteredTasks.filter((task) => task.deadline);
+    
+    // Group tasks by project and create simple dependencies (sequential within same project)
+    const tasksByProject = new Map<string | null, ClientRequest[]>();
+    tasksWithDeadline.forEach((task) => {
+      const projectId = task.project_id;
+      if (!tasksByProject.has(projectId)) {
+        tasksByProject.set(projectId, []);
+      }
+      tasksByProject.get(projectId)!.push(task);
+    });
+
+    // Sort tasks within each project by deadline and create dependencies
+    const dependencyMap = new Map<string, string[]>();
+    tasksByProject.forEach((projectTasks) => {
+      const sorted = [...projectTasks].sort(
+        (a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime()
+      );
+      sorted.forEach((task, index) => {
+        if (index > 0) {
+          // This task depends on the previous task in the same project
+          dependencyMap.set(task.id, [sorted[index - 1].id]);
+        }
+      });
+    });
+
+    return tasksWithDeadline.map((task) => ({
+      id: task.id,
+      title: task.title,
+      startDate: new Date(task.created_at),
+      endDate: new Date(task.deadline!),
+      status: task.status,
+      priority: task.priority,
+      assignee: task.assigned_member?.name,
+      assigneeId: task.assigned_member?.id,
+      projectName: projects.find((p) => p.id === task.project_id)?.name,
+      dependsOn: dependencyMap.get(task.id),
+    }));
   }, [filteredTasks, projects]);
 
   const handleUpdateDeadline = (taskId: string, newDeadline: string) => {
@@ -245,6 +273,7 @@ const Tasks = () => {
         <TabsContent value="gantt">
           <ProjectGanttChart
             tasks={ganttTasks}
+            teamMembers={teamMembers.map((m) => ({ id: m.id, name: m.name }))}
             startDate={startOfMonth(new Date())}
             endDate={addDays(new Date(), 90)}
           />
