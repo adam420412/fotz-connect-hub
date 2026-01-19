@@ -26,6 +26,7 @@ import BookingsTable from "@/components/crm/BookingsTable";
 import ContactHistoryList from "@/components/crm/ContactHistoryList";
 import LeadDialog from "@/components/crm/LeadDialog";
 import DealDialog from "@/components/crm/DealDialog";
+import SalesFunnel from "@/components/crm/SalesFunnel";
 import { exportLeadsToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 
@@ -97,59 +98,67 @@ const CRM = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Leady</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalLeads}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.newLeads} nowych
-              </p>
-            </CardContent>
-          </Card>
+        {/* Stats and Funnel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Stats Column */}
+          <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Leady</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalLeads}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.newLeads} nowych
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Deale</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalDeals}</div>
-              <p className="text-xs text-muted-foreground">
-                {formatCurrency(stats.dealsValue)}
-              </p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Deale</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalDeals}</div>
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(stats.dealsValue)}
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Rezerwacje</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingBookings}</div>
-              <p className="text-xs text-muted-foreground">
-                oczekujących
-              </p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Rezerwacje</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.pendingBookings}</div>
+                <p className="text-xs text-muted-foreground">
+                  oczekujących
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Potwierdzone</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.confirmedBookings}</div>
-              <p className="text-xs text-muted-foreground">
-                rezerwacji
-              </p>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Potwierdzone</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.confirmedBookings}</div>
+                <p className="text-xs text-muted-foreground">
+                  rezerwacji
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sales Funnel */}
+          <div className="lg:col-span-1">
+            <SalesFunnel leads={leads} deals={deals} />
+          </div>
         </div>
 
         {/* Search */}
