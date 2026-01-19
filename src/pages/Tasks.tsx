@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { addDays, startOfMonth } from "date-fns";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import TaskItem from "@/components/dashboard/TaskItem";
 import { Button } from "@/components/ui/button";
@@ -12,20 +13,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, LayoutGrid, List, CalendarDays, Loader2, Zap } from "lucide-react";
+import { Search, LayoutGrid, List, CalendarDays, Loader2, Zap, FolderOpen, GanttChart } from "lucide-react";
 import { useClientRequests, ClientRequest } from "@/hooks/useClientRequests";
+import { useProjects } from "@/hooks/useProjects";
 import { TaskCalendar } from "@/components/calendar/TaskCalendar";
 import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { QuickTaskDialog } from "@/components/tasks/QuickTaskDialog";
 import { TaskKanbanBoard } from "@/components/tasks/TaskKanbanBoard";
+import { BulkProjectAssignment } from "@/components/tasks/BulkProjectAssignment";
+import { ProjectGanttChart } from "@/components/projects/ProjectGanttChart";
 
 const Tasks = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [selectedTask, setSelectedTask] = useState<ClientRequest | null>(null);
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const { requests, isLoading, updateRequest } = useClientRequests();
+  const { projects } = useProjects();
   const { toast } = useToast();
 
   const handleNewTask = () => {
@@ -38,8 +45,28 @@ const Tasks = () => {
       .includes(searchQuery.toLowerCase());
     const matchesPriority =
       priorityFilter === "all" || task.priority === priorityFilter;
-    return matchesSearch && matchesPriority;
+    const matchesProject =
+      projectFilter === "all" ||
+      (projectFilter === "none" && !task.project_id) ||
+      task.project_id === projectFilter;
+    return matchesSearch && matchesPriority && matchesProject;
   });
+
+  // Convert tasks to Gantt format
+  const ganttTasks = useMemo(() => {
+    return filteredTasks
+      .filter((task) => task.deadline)
+      .map((task) => ({
+        id: task.id,
+        title: task.title,
+        startDate: new Date(task.created_at),
+        endDate: new Date(task.deadline!),
+        status: task.status,
+        priority: task.priority,
+        assignee: task.assigned_member?.name,
+        projectName: projects.find((p) => p.id === task.project_id)?.name,
+      }));
+  }, [filteredTasks, projects]);
 
   const handleUpdateDeadline = (taskId: string, newDeadline: string) => {
     updateRequest({ id: taskId, deadline: newDeadline });
@@ -92,9 +119,9 @@ const Tasks = () => {
       onNewClick={handleNewTask}
     >
       <Tabs defaultValue="kanban" className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 sm:w-64">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px] sm:w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Szukaj zadań..."
@@ -104,7 +131,7 @@ const Tasks = () => {
               />
             </div>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-36">
                 <SelectValue placeholder="Priorytet" />
               </SelectTrigger>
               <SelectContent>
@@ -115,6 +142,33 @@ const Tasks = () => {
                 <SelectItem value="low">Niski</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Project Filter */}
+            <Select value={projectFilter} onValueChange={setProjectFilter}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Projekt" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszystkie projekty</SelectItem>
+                <SelectItem value="none">Bez projektu</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Bulk Assignment Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setBulkAssignOpen(true)}
+            >
+              <FolderOpen className="h-4 w-4" />
+              Przypisz do projektu
+            </Button>
             
             {/* Quick Task Button */}
             <QuickTaskDialog
@@ -139,6 +193,10 @@ const Tasks = () => {
             <TabsTrigger value="calendar" className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
               Kalendarz
+            </TabsTrigger>
+            <TabsTrigger value="gantt" className="flex items-center gap-2">
+              <GanttChart className="h-4 w-4" />
+              Gantt
             </TabsTrigger>
           </TabsList>
         </div>
@@ -182,6 +240,15 @@ const Tasks = () => {
             onTaskClick={setSelectedTask}
           />
         </TabsContent>
+
+        {/* Gantt Chart View */}
+        <TabsContent value="gantt">
+          <ProjectGanttChart
+            tasks={ganttTasks}
+            startDate={startOfMonth(new Date())}
+            endDate={addDays(new Date(), 90)}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Task Details Dialog */}
@@ -203,6 +270,13 @@ const Tasks = () => {
           isTeamMember
         />
       )}
+
+      {/* Bulk Project Assignment Dialog */}
+      <BulkProjectAssignment
+        tasks={filteredTasks}
+        open={bulkAssignOpen}
+        onOpenChange={setBulkAssignOpen}
+      />
     </DashboardLayout>
   );
 };
