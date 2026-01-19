@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useCallback } from "react";
 import { logActivity } from "@/hooks/useActivityLogger";
+import { notifyNewComment } from "@/utils/slackNotifications";
 
 export interface RequestComment {
   id: string;
@@ -79,7 +80,7 @@ export function useRequestComments(requestId: string | null) {
   }, [requestId, handleRealtimeUpdate]);
 
   const addComment = useMutation({
-    mutationFn: async ({ content, userName, userRole }: { content: string; userName: string; userRole: string }) => {
+    mutationFn: async ({ content, userName, userRole, taskTitle }: { content: string; userName: string; userRole: string; taskTitle?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!requestId) throw new Error("No request selected");
@@ -97,14 +98,18 @@ export function useRequestComments(requestId: string | null) {
         .single();
 
       if (error) throw error;
-      return data;
+      return { data, taskTitle };
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, taskTitle }) => {
       queryClient.invalidateQueries({ queryKey: ["request-comments", requestId] });
       logActivity("comment_add", "request", requestId!, null, {
         comment_id: data.id,
         preview: data.content.slice(0, 50),
       });
+      // Send Slack notification
+      if (taskTitle) {
+        notifyNewComment(taskTitle, data.user_name, data.content);
+      }
     },
     onError: (error: any) => {
       toast({

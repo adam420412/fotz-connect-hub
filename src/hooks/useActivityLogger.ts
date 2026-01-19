@@ -26,7 +26,10 @@ export type ActivityActionType =
   | "invitation_create"
   | "project_join"
   | "project_leave"
-  | "rate_update";
+  | "rate_update"
+  | "project_create"
+  | "project_update"
+  | "project_delete";
 
 export type ActivityEntityType = 
   | "file"
@@ -39,7 +42,8 @@ export type ActivityEntityType =
   | "client"
   | "invitation"
   | "project_member"
-  | "team_member_rate";
+  | "team_member_rate"
+  | "project";
 
 export async function logActivity(
   actionType: ActivityActionType,

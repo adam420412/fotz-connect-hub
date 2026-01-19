@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ProjectCard from "@/components/dashboard/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,131 +11,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Grid3X3, List, BarChart3, Users } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Search, Grid3X3, List, BarChart3, Users, Calendar, Trash2, Loader2 } from "lucide-react";
 import { ProjectMembersDialog } from "@/components/projects/ProjectMembersDialog";
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
+import { ProjectDialog } from "@/components/projects/ProjectDialog";
+import { useProjects } from "@/hooks/useProjects";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
-const projects = [
-  {
-    id: "1",
-    name: "Rebranding Klient ABC",
-    description: "Kompletny rebranding marki, logo i materiały marketingowe dla firmy ABC. Projekt obejmuje nową identyfikację wizualną.",
-    progress: 65,
-    tasksCompleted: 13,
-    totalTasks: 20,
-    dueDate: "15 sty",
-    status: "active" as const,
-    team: [{ name: "Anna K." }, { name: "Michał P." }, { name: "Ewa S." }],
-  },
-  {
-    id: "2",
-    name: "Kampania Social Media",
-    description: "Prowadzenie profili i tworzenie contentu na Instagram, Facebook i LinkedIn",
-    progress: 40,
-    tasksCompleted: 8,
-    totalTasks: 20,
-    dueDate: "30 sty",
-    status: "active" as const,
-    team: [{ name: "Tomek W." }, { name: "Kasia M." }],
-  },
-  {
-    id: "3",
-    name: "Strona WWW - XYZ Corp",
-    description: "Projekt i wdrożenie nowej strony firmowej z systemem CMS",
-    progress: 90,
-    tasksCompleted: 18,
-    totalTasks: 20,
-    dueDate: "10 sty",
-    status: "active" as const,
-    team: [
-      { name: "Piotr N." },
-      { name: "Anna K." },
-      { name: "Michał P." },
-      { name: "Ewa S." },
-      { name: "Jan Z." },
-    ],
-  },
-  {
-    id: "4",
-    name: "Materiały reklamowe Q1",
-    description: "Projekt ulotek, plakatów i banerów reklamowych na pierwszy kwartał",
-    progress: 25,
-    tasksCompleted: 5,
-    totalTasks: 20,
-    dueDate: "28 lut",
-    status: "active" as const,
-    team: [{ name: "Ewa S." }, { name: "Kasia M." }],
-  },
-  {
-    id: "5",
-    name: "Video Marketing",
-    description: "Seria filmów promocyjnych dla YouTube i TikTok",
-    progress: 100,
-    tasksCompleted: 15,
-    totalTasks: 15,
-    dueDate: "1 sty",
-    status: "completed" as const,
-    team: [{ name: "Tomek W." }],
-  },
-  {
-    id: "6",
-    name: "Email Marketing Setup",
-    description: "Konfiguracja i projekt szablonów newslettera",
-    progress: 0,
-    tasksCompleted: 0,
-    totalTasks: 8,
-    dueDate: "15 mar",
-    status: "paused" as const,
-    team: [{ name: "Anna K." }],
-  },
-];
+const statusConfig = {
+  active: { label: "Aktywny", className: "bg-green-500/10 text-green-500" },
+  paused: { label: "Wstrzymany", className: "bg-yellow-500/10 text-yellow-500" },
+  completed: { label: "Zakończony", className: "bg-blue-500/10 text-blue-500" },
+};
 
 const Projects = () => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  const { projects, isLoading, createProject, updateProject, deleteProject, isCreating, isUpdating } = useProjects();
   const { isProjectMember } = useProjectMembers();
-  const { toast } = useToast();
-
-  const handleNewProject = () => {
-    toast({
-      title: "Nowy projekt",
-      description: "Funkcja tworzenia projektu będzie dostępna wkrótce. Użyj szablonów projektów.",
-    });
-    navigate("/templates");
-  };
 
   const filteredProjects = projects.filter((project) => {
-    const matchesSearch = project.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || project.status === statusFilter;
+    const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <DashboardLayout
-      title="Projekty"
-      showNewButton
-      newButtonLabel="Nowy projekt"
-      onNewClick={handleNewProject}
-    >
+    <DashboardLayout title="Projekty">
       <Tabs defaultValue="projects" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:w-[300px]">
-          <TabsTrigger value="projects" className="flex items-center gap-2">
-            <Grid3X3 className="h-4 w-4" />
-            Projekty
-          </TabsTrigger>
-          <TabsTrigger value="costs" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Koszty
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList className="grid w-full grid-cols-2 lg:w-[300px]">
+            <TabsTrigger value="projects" className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4" />
+              Projekty
+            </TabsTrigger>
+            <TabsTrigger value="costs" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Koszty
+            </TabsTrigger>
+          </TabsList>
+          
+          <ProjectDialog 
+            onSave={createProject} 
+            isLoading={isCreating} 
+          />
+        </div>
 
         <TabsContent value="projects" className="space-y-6">
           {/* Filters */}
@@ -182,43 +120,108 @@ const Projects = () => {
             </div>
           </div>
 
-          {/* Projects Grid */}
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                : "space-y-3"
-            }
-          >
-            {filteredProjects.map((project) => (
-              <div key={project.id} className="relative">
-                <ProjectCard {...project} />
-                <div className="absolute top-3 right-3 flex items-center gap-2">
-                  {isProjectMember(project.id) && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Users className="h-3 w-3 mr-1" />
-                      Członek
-                    </Badge>
-                  )}
-                </div>
-                <div className="mt-2 flex justify-end">
-                  <ProjectMembersDialog 
-                    projectId={project.id} 
-                    projectName={project.name} 
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredProjects.length === 0 && (
+          {/* Loading state */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-lg font-medium text-muted-foreground">
-                Brak projektów spełniających kryteria
+                {projects.length === 0 ? "Brak projektów" : "Brak projektów spełniających kryteria"}
               </p>
               <p className="text-sm text-muted-foreground">
-                Spróbuj zmienić filtry lub frazę wyszukiwania
+                {projects.length === 0 ? "Utwórz pierwszy projekt" : "Spróbuj zmienić filtry"}
               </p>
+            </div>
+          ) : (
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                  : "space-y-3"
+              }
+            >
+              {filteredProjects.map((project) => (
+                <Card key={project.id} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{project.name}</h3>
+                      {project.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          {project.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 ml-2">
+                      <ProjectDialog
+                        project={project}
+                        onSave={updateProject}
+                        isLoading={isUpdating}
+                      />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Usuń projekt</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Czy na pewno chcesz usunąć projekt "{project.name}"? Ta akcja jest nieodwracalna.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteProject(project.id)}>
+                              Usuń
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Badge className={statusConfig[project.status].className}>
+                        {statusConfig[project.status].label}
+                      </Badge>
+                      {isProjectMember(project.id) && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Users className="h-3 w-3 mr-1" />
+                          Członek
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Postęp</span>
+                        <span className="font-medium">{project.progress}%</span>
+                      </div>
+                      <Progress value={project.progress} className="h-2" />
+                    </div>
+
+                    {project.due_date && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          Termin: {format(new Date(project.due_date), "d MMM yyyy", { locale: pl })}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end pt-2">
+                      <ProjectMembersDialog
+                        projectId={project.id}
+                        projectName={project.name}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
         </TabsContent>
