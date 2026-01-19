@@ -12,12 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, LayoutGrid, List, CalendarDays, Loader2 } from "lucide-react";
+import { Search, Plus, LayoutGrid, List, CalendarDays, Loader2, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClientRequests, ClientRequest } from "@/hooks/useClientRequests";
 import { TaskCalendar } from "@/components/calendar/TaskCalendar";
 import RequestDetailsDialog from "@/components/requests/RequestDetailsDialog";
 import { useToast } from "@/hooks/use-toast";
+import { QuickTaskDialog } from "@/components/tasks/QuickTaskDialog";
 
 const statusColumns = [
   { id: "pending", label: "Oczekujące", color: "bg-amber-500" },
@@ -124,6 +125,16 @@ const Tasks = () => {
                 <SelectItem value="low">Niski</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Quick Task Button */}
+            <QuickTaskDialog
+              trigger={
+                <Button variant="secondary" size="sm" className="gap-2">
+                  <Zap className="h-4 w-4" />
+                  Szybkie zadanie
+                </Button>
+              }
+            />
           </div>
 
           <TabsList>
@@ -142,7 +153,6 @@ const Tasks = () => {
           </TabsList>
         </div>
 
-        {/* Kanban View */}
         <TabsContent value="kanban">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 auto-rows-max">
             {statusColumns.map((column) => {
@@ -160,9 +170,14 @@ const Tasks = () => {
                         {tasks.length}
                       </span>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <QuickTaskDialog
+                      defaultStatus={column.id}
+                      trigger={
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
                   </div>
                   <div className="space-y-3">
                     {tasks.map((task) => (
