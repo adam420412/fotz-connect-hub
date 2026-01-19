@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import TaskItem from "@/components/dashboard/TaskItem";
 import { Button } from "@/components/ui/button";
@@ -33,11 +34,16 @@ const priorityMap: Record<string, string> = {
 };
 
 const Tasks = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedTask, setSelectedTask] = useState<ClientRequest | null>(null);
   const { requests, isLoading, updateRequest } = useClientRequests();
   const { toast } = useToast();
+
+  const handleNewTask = () => {
+    navigate("/new-request");
+  };
 
   const filteredTasks = requests.filter((task) => {
     const matchesSearch = task.title
@@ -92,6 +98,7 @@ const Tasks = () => {
       title="Zadania"
       showNewButton
       newButtonLabel="Nowe zadanie"
+      onNewClick={handleNewTask}
     >
       <Tabs defaultValue="kanban" className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
