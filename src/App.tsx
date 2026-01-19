@@ -30,6 +30,9 @@ import Reports from "./pages/Reports";
 import TeamCalendar from "./pages/TeamCalendar";
 import ProjectTemplates from "./pages/ProjectTemplates";
 import CRM from "./pages/CRM";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
+import AdminKPIDashboard from "./pages/AdminKPIDashboard";
+import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +70,9 @@ const App = () => (
                 <Route path="/team-calendar" element={<ProtectedRoute requireTeamMember><TeamCalendar /></ProtectedRoute>} />
                 <Route path="/templates" element={<ProtectedRoute requireTeamMember><ProjectTemplates /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute requireTeamMember><CRM /></ProtectedRoute>} />
+                <Route path="/employee-dashboard" element={<ProtectedRoute requireTeamMember><EmployeeDashboard /></ProtectedRoute>} />
+                <Route path="/admin-kpi" element={<ProtectedRoute requireAdmin><AdminKPIDashboard /></ProtectedRoute>} />
+                <Route path="/client-portal" element={<ProtectedRoute><ClientPortal /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
