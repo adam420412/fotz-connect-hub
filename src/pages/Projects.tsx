@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProjectCard from "@/components/dashboard/ProjectCard";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { ProjectMembersDialog } from "@/components/projects/ProjectMembersDialog
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const projects = [
   {
@@ -93,10 +95,20 @@ const projects = [
 ];
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const { isProjectMember } = useProjectMembers();
+  const { toast } = useToast();
+
+  const handleNewProject = () => {
+    toast({
+      title: "Nowy projekt",
+      description: "Funkcja tworzenia projektu będzie dostępna wkrótce. Użyj szablonów projektów.",
+    });
+    navigate("/templates");
+  };
 
   const filteredProjects = projects.filter((project) => {
     const matchesSearch = project.name
@@ -112,6 +124,7 @@ const Projects = () => {
       title="Projekty"
       showNewButton
       newButtonLabel="Nowy projekt"
+      onNewClick={handleNewProject}
     >
       <Tabs defaultValue="projects" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:w-[300px]">

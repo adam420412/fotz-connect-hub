@@ -6,95 +6,36 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Search,
   UserPlus,
   Mail,
   CheckSquare,
   Clock,
   BarChart3,
+  Loader2,
 } from "lucide-react";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  initials: string;
-  activeTasks: number;
-  completedTasks: number;
-  workload: number;
-  status: "online" | "offline" | "busy";
-}
-
-const mockTeamMembers: TeamMember[] = [
-  {
-    id: "1",
-    name: "Anna Kowalska",
-    email: "anna.k@fotz.pl",
-    role: "Senior Designer",
-    initials: "AK",
-    activeTasks: 5,
-    completedTasks: 23,
-    workload: 80,
-    status: "online",
-  },
-  {
-    id: "2",
-    name: "Michał Piotrowski",
-    email: "michal.p@fotz.pl",
-    role: "Project Manager",
-    initials: "MP",
-    activeTasks: 8,
-    completedTasks: 45,
-    workload: 95,
-    status: "busy",
-  },
-  {
-    id: "3",
-    name: "Ewa Szymańska",
-    email: "ewa.s@fotz.pl",
-    role: "Graphic Designer",
-    initials: "ES",
-    activeTasks: 3,
-    completedTasks: 18,
-    workload: 45,
-    status: "online",
-  },
-  {
-    id: "4",
-    name: "Piotr Nowak",
-    email: "piotr.n@fotz.pl",
-    role: "Web Developer",
-    initials: "PN",
-    activeTasks: 4,
-    completedTasks: 31,
-    workload: 60,
-    status: "online",
-  },
-  {
-    id: "5",
-    name: "Tomek Wiśniewski",
-    email: "tomek.w@fotz.pl",
-    role: "Video Editor",
-    initials: "TW",
-    activeTasks: 2,
-    completedTasks: 15,
-    workload: 35,
-    status: "offline",
-  },
-  {
-    id: "6",
-    name: "Kasia Mazur",
-    email: "kasia.m@fotz.pl",
-    role: "Content Writer",
-    initials: "KM",
-    activeTasks: 6,
-    completedTasks: 28,
-    workload: 70,
-    status: "online",
-  },
-];
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useClientRequests } from "@/hooks/useClientRequests";
+import { useTimeTracking } from "@/hooks/useTimeTracking";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const statusConfig = {
   online: { label: "Online", className: "bg-green-500" },
@@ -104,17 +45,96 @@ const statusConfig = {
 
 const Team = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState("Designer");
+  
+  const { teamMembers, isLoading } = useTeamMembers();
+  const { requests } = useClientRequests();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const filteredMembers = mockTeamMembers.filter(
+  const addTeamMember = useMutation({
+    mutationFn: async (data: { name: string; email: string; role: string }) => {
+      const { error } = await supabase
+        .from("team_members")
+        .insert({
+          name: data.name,
+          email: data.email,
+          role: data.role,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
+      toast({
+        title: "Dodano członka zespołu",
+        description: "Nowy członek zespołu został dodany pomyślnie",
+      });
+      setIsAddDialogOpen(false);
+      setNewMemberName("");
+      setNewMemberEmail("");
+      setNewMemberRole("Designer");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Błąd",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddMember = () => {
+    if (!newMemberName.trim() || !newMemberEmail.trim()) {
+      toast({
+        title: "Błąd",
+        description: "Wypełnij wszystkie pola",
+        variant: "destructive",
+      });
+      return;
+    }
+    addTeamMember.mutate({
+      name: newMemberName,
+      email: newMemberEmail,
+      role: newMemberRole,
+    });
+  };
+
+  const filteredMembers = teamMembers.filter(
     (member) =>
       member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalTasks = mockTeamMembers.reduce((acc, m) => acc + m.activeTasks, 0);
-  const avgWorkload = Math.round(
-    mockTeamMembers.reduce((acc, m) => acc + m.workload, 0) / mockTeamMembers.length
-  );
+  // Calculate stats from real data
+  const getTasksForMember = (memberId: string) => {
+    return requests.filter(r => r.assigned_to === memberId && r.status !== "completed").length;
+  };
+
+  const getCompletedTasksForMember = (memberId: string) => {
+    return requests.filter(r => r.assigned_to === memberId && r.status === "completed").length;
+  };
+
+  const totalTasks = requests.filter(r => r.status !== "completed").length;
+  const avgWorkload = teamMembers.length > 0 
+    ? Math.round(teamMembers.reduce((acc, m) => acc + getTasksForMember(m.id), 0) / teamMembers.length * 10) 
+    : 0;
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Zespół">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout title="Zespół">
@@ -128,7 +148,7 @@ const Team = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Członków zespołu</p>
-                <p className="text-2xl font-bold text-foreground">{mockTeamMembers.length}</p>
+                <p className="text-2xl font-bold text-foreground">{teamMembers.length}</p>
               </div>
             </div>
           </div>
@@ -150,7 +170,7 @@ const Team = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Średnie obciążenie</p>
-                <p className="text-2xl font-bold text-foreground">{avgWorkload}%</p>
+                <p className="text-2xl font-bold text-foreground">{avgWorkload} zadań</p>
               </div>
             </div>
           </div>
@@ -167,64 +187,140 @@ const Team = () => {
               className="pl-10"
             />
           </div>
-          <Button variant="gradient" className="gap-2">
+          <Button variant="gradient" className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
             <UserPlus className="h-4 w-4" />
             Dodaj członka
           </Button>
         </div>
 
         {/* Team Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredMembers.map((member) => (
-            <div
-              key={member.id}
-              className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
-            >
-              <div className="flex items-start gap-4">
-                <div className="relative">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-gradient-fotz text-primary-foreground font-medium">
-                      {member.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span
-                    className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card ${statusConfig[member.status].className}`}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground">{member.name}</h3>
-                  <p className="text-sm text-muted-foreground">{member.role}</p>
-                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                    <Mail className="h-3 w-3" />
-                    <span className="truncate">{member.email}</span>
+        {filteredMembers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <UserPlus className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground">Brak członków zespołu</h3>
+            <p className="text-muted-foreground mb-4">Dodaj pierwszego członka zespołu</p>
+            <Button variant="gradient" onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Dodaj członka
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredMembers.map((member) => {
+              const activeTasks = getTasksForMember(member.id);
+              const completedTasks = getCompletedTasksForMember(member.id);
+              const workload = Math.min(activeTasks * 20, 100);
+              
+              return (
+                <div
+                  key={member.id}
+                  className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-gradient-fotz text-primary-foreground font-medium">
+                          {getInitials(member.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span
+                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card ${member.is_active ? "bg-green-500" : "bg-muted-foreground"}`}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground">{member.name}</h3>
+                      <p className="text-sm text-muted-foreground">{member.role}</p>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Mail className="h-3 w-3" />
+                        <span className="truncate">{member.email}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Obciążenie</span>
-                  <span className={`font-medium ${member.workload > 85 ? "text-destructive" : "text-foreground"}`}>
-                    {member.workload}%
-                  </span>
-                </div>
-                <Progress value={member.workload} className="h-2" />
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Obciążenie</span>
+                      <span className={`font-medium ${workload > 85 ? "text-destructive" : "text-foreground"}`}>
+                        {workload}%
+                      </span>
+                    </div>
+                    <Progress value={workload} className="h-2" />
 
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-1 text-sm">
-                    <CheckSquare className="h-4 w-4 text-primary" />
-                    <span className="text-foreground">{member.activeTasks} aktywnych</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{member.completedTasks} ukończonych</span>
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-1 text-sm">
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                        <span className="text-foreground">{activeTasks} aktywnych</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{completedTasks} ukończonych</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Add Member Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Dodaj członka zespołu</DialogTitle>
+            <DialogDescription>
+              Dodaj nowego członka do zespołu FOTZ Studio
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Imię i nazwisko</Label>
+              <Input
+                id="name"
+                placeholder="np. Jan Kowalski"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="np. jan@fotz.pl"
+                value={newMemberEmail}
+                onChange={(e) => setNewMemberEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Rola</Label>
+              <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Designer">Designer</SelectItem>
+                  <SelectItem value="Developer">Developer</SelectItem>
+                  <SelectItem value="Project Manager">Project Manager</SelectItem>
+                  <SelectItem value="Content Writer">Content Writer</SelectItem>
+                  <SelectItem value="Video Editor">Video Editor</SelectItem>
+                  <SelectItem value="Marketing Specialist">Marketing Specialist</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Anuluj
+            </Button>
+            <Button onClick={handleAddMember} disabled={addTeamMember.isPending}>
+              {addTeamMember.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Dodaj
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
