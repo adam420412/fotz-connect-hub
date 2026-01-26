@@ -95,7 +95,12 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["client-requests"] });
+      // Odśwież wszystkie powiązane zapytania
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["client-requests"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        projectId !== "none" && queryClient.invalidateQueries({ queryKey: ["project-tasks", projectId] }),
+      ]);
       
       logActivity("request_create", "request", data.id, title, {
         request_type: "task",
