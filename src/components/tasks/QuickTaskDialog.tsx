@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLogger";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface QuickTaskDialogProps {
   trigger?: React.ReactNode;
@@ -38,36 +39,43 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("normal");
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [assignedTo, setAssignedTo] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("none");
+  const [assignedTo, setAssignedTo] = useState<string>("none");
   const [deadline, setDeadline] = useState<string>("");
-  const [projectId, setProjectId] = useState<string>(defaultProjectId || "");
+  const [projectId, setProjectId] = useState<string>(defaultProjectId || "none");
 
   const { categories } = useTaskCategories();
   const { teamMembers } = useTeamMembers();
   const { projects } = useProjects();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuthContext();
 
   const resetForm = () => {
     setTitle("");
     setDescription("");
     setPriority("normal");
-    setCategoryId("");
-    setAssignedTo("");
+    setCategoryId("none");
+    setAssignedTo("none");
     setDeadline("");
-    setProjectId(defaultProjectId || "");
+    setProjectId(defaultProjectId || "none");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    if (!user) {
+      toast({
+        title: "Brak autoryzacji",
+        description: "Musisz być zalogowany, aby dodać zadanie",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
       const { data, error } = await supabase
         .from("client_requests")
         .insert({
@@ -75,12 +83,12 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
           description: description.trim() || null,
           request_type: "task",
           priority: priority as "low" | "normal" | "high" | "urgent",
-          category_id: categoryId || null,
-          assigned_to: assignedTo || null,
+          category_id: categoryId !== "none" ? categoryId : null,
+          assigned_to: assignedTo !== "none" ? assignedTo : null,
           deadline: deadline || null,
           status: defaultStatus,
           client_id: user.id,
-          project_id: projectId || null,
+          project_id: projectId !== "none" ? projectId : null,
         })
         .select()
         .single();
@@ -173,7 +181,7 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
                   <SelectValue placeholder="Wybierz..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Brak</SelectItem>
+                  <SelectItem value="none">Brak</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       <div className="flex items-center gap-2">
@@ -198,7 +206,7 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
                   <SelectValue placeholder="Wybierz..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Brak</SelectItem>
+                  <SelectItem value="none">Brak</SelectItem>
                   {teamMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name}
@@ -225,7 +233,7 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
                 <SelectValue placeholder="Przypisz do projektu..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Brak projektu</SelectItem>
+                <SelectItem value="none">Brak projektu</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
