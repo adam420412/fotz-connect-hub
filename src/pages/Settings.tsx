@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryManagement } from "@/components/settings/CategoryManagement";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import {
   User,
   Bell,
@@ -31,7 +31,7 @@ import {
 const Settings = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const googleCalendar = useGoogleCalendar(user?.id);
   const [slackWebhook, setSlackWebhook] = useState("");
   const [slackConnected, setSlackConnected] = useState(false);

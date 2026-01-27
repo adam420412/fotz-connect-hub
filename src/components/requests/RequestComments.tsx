@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Trash2, Loader2, MessageCircle } from "lucide-react";
 import { useRequestComments, RequestComment } from "@/hooks/useRequestComments";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ const roleLabels: Record<string, string> = {
 
 const RequestComments = ({ requestId }: RequestCommentsProps) => {
   const { comments, isLoading, addComment, deleteComment, isAdding } = useRequestComments(requestId);
-  const { user, profile, role } = useAuth();
+  const { user, profile, role } = useAuthContext();
   const [newComment, setNewComment] = useState("");
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
