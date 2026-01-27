@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLogger";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface QuickTaskDialogProps {
   trigger?: React.ReactNode;
@@ -49,7 +49,7 @@ export function QuickTaskDialog({ trigger, defaultStatus = "pending", defaultPro
   const { projects } = useProjects();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   const resetForm = () => {
     setTitle("");

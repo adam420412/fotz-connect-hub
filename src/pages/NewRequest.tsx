@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import { useClientRequests, CreateRequestData, ClientRequest } from "@/hooks/useClientRequests";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { format, isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { pl } from "date-fns/locale";
 import { briefConfigs, formatBriefAnswers } from "@/components/requests/briefConfig";
@@ -113,7 +113,7 @@ const getDeadlineInfo = (deadline: string | null) => {
 const NewRequest = () => {
   const { requests, isLoading, createRequest, updateRequest, isCreating } = useClientRequests();
   const { files } = useProjectFiles();
-  const { role } = useAuth();
+  const { role } = useAuthContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>("type_select");
   const [selectedRequest, setSelectedRequest] = useState<ClientRequest | null>(null);

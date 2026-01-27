@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -30,8 +29,12 @@ import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+}
+
+const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
