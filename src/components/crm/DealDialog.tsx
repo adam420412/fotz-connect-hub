@@ -86,14 +86,14 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
           <div className="space-y-2">
             <Label htmlFor="lead">Powiązany lead</Label>
             <Select
-              value={formData.lead_id}
-              onValueChange={(value) => setFormData({ ...formData, lead_id: value })}
+              value={formData.lead_id || "none"}
+              onValueChange={(value) => setFormData({ ...formData, lead_id: value === "none" ? "" : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Wybierz lead (opcjonalnie)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Brak</SelectItem>
+                <SelectItem value="none">Brak</SelectItem>
                 {leads.map((lead) => (
                   <SelectItem key={lead.id} value={lead.id}>
                     {lead.name} ({lead.email})
