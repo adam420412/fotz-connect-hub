@@ -170,12 +170,12 @@ export function ProjectDialog({ project, onSave, isLoading, trigger }: ProjectDi
 
           <div className="space-y-2">
             <Label htmlFor="client">Klient</Label>
-            <Select value={clientId} onValueChange={setClientId}>
+            <Select value={clientId || "none"} onValueChange={(v) => setClientId(v === "none" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Wybierz klienta" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Brak klienta</SelectItem>
+                <SelectItem value="none">Brak klienta</SelectItem>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.company_name || client.full_name || client.email}
