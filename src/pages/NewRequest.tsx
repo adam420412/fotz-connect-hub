@@ -551,12 +551,12 @@ const NewRequest = () => {
                 {(formType === "comment" || formType === "feedback") && files.length > 0 && (
                   <div className="space-y-2">
                     <Label>Powiązany plik (opcjonalne)</Label>
-                    <Select value={formFileId} onValueChange={setFormFileId}>
+                    <Select value={formFileId || "none"} onValueChange={(v) => setFormFileId(v === "none" ? "" : v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Wybierz plik" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Brak</SelectItem>
+                        <SelectItem value="none">Brak</SelectItem>
                         {files.map((file) => (
                           <SelectItem key={file.id} value={file.id}>
                             {file.name}
