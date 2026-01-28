@@ -76,7 +76,7 @@ const DailyPost = () => {
   const [postContent, setPostContent] = useState("");
   const [postPlatform, setPostPlatform] = useState("Instagram");
   const [postHashtags, setPostHashtags] = useState("");
-  const [selectedAuthor, setSelectedAuthor] = useState<string>("");
+  const [selectedAuthor, setSelectedAuthor] = useState<string>("none");
   const [isSaving, setIsSaving] = useState(false);
 
   const today = new Date().toLocaleDateString("pl-PL", {
@@ -245,7 +245,7 @@ const DailyPost = () => {
   };
 
   const handleSavePost = async () => {
-    if (!postTitle.trim() || !postContent.trim() || !selectedAuthor) {
+    if (!postTitle.trim() || !postContent.trim() || selectedAuthor === "none") {
       toast({
         title: "Uzupełnij dane",
         description: "Tytuł, treść i autor są wymagane",
@@ -426,6 +426,7 @@ const DailyPost = () => {
                         <SelectValue placeholder="Wybierz autora" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Wybierz...</SelectItem>
                         {teamMembers.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
                             <span className="flex items-center gap-2">
