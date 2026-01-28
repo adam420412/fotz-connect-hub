@@ -24,59 +24,9 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useTimeTracking, formatDuration } from "@/hooks/useTimeTracking";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
 import { useClientRequests } from "@/hooks/useClientRequests";
-
-// Mock data for projects and activities (will be replaced with real data later)
-const projects = [
-  {
-    id: "1",
-    name: "Rebranding Klient ABC",
-    description: "Kompletny rebranding marki, logo i materiały marketingowe",
-    progress: 65,
-    tasksCompleted: 13,
-    totalTasks: 20,
-    dueDate: "15 sty",
-    status: "active" as const,
-    team: [{ name: "Anna K." }, { name: "Michał P." }, { name: "Ewa S." }],
-  },
-  {
-    id: "2",
-    name: "Kampania Social Media",
-    description: "Prowadzenie profili i tworzenie contentu",
-    progress: 40,
-    tasksCompleted: 8,
-    totalTasks: 20,
-    dueDate: "30 sty",
-    status: "active" as const,
-    team: [{ name: "Tomek W." }, { name: "Kasia M." }],
-  },
-];
-
-const activities = [
-  {
-    id: "1",
-    type: "comment" as const,
-    title: "Nowy komentarz w zadaniu",
-    description: 'Komentarz do "Przygotowanie prezentacji brandingu"',
-    time: "5 min temu",
-    user: { name: "Michał P." },
-  },
-  {
-    id: "2",
-    type: "file_approved" as const,
-    title: "Plik zaakceptowany",
-    description: "Logo_final_v3.ai został zaakceptowany przez klienta",
-    time: "1 godz. temu",
-    user: { name: "Klient ABC" },
-  },
-  {
-    id: "3",
-    type: "task_completed" as const,
-    title: "Zadanie ukończone",
-    description: 'Zakończono "Projekt wizytówek firmowych"',
-    time: "2 godz. temu",
-    user: { name: "Ewa S." },
-  },
-];
+import { useProjects } from "@/hooks/useProjects";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
 const Dashboard = () => {
   const { profile, isTeamMember } = useAuthContext();
@@ -84,6 +34,33 @@ const Dashboard = () => {
   const { runningEntry, todayTotal } = useTimeTracking();
   const { files } = useProjectFiles();
   const { requests, stats: requestStats } = useClientRequests();
+  const { projects, isLoading: projectsLoading } = useProjects();
+
+  // Transform projects to ProjectCard format
+  const activeProjects = projects
+    .filter(p => p.status === "active")
+    .slice(0, 4)
+    .map(project => ({
+      id: project.id,
+      name: project.name,
+      description: project.description || "",
+      progress: project.progress || 0,
+      tasksCompleted: Math.round((project.progress || 0) / 10),
+      totalTasks: 10,
+      dueDate: project.due_date ? format(new Date(project.due_date), "d MMM", { locale: pl }) : undefined,
+      status: project.status as "active" | "paused" | "completed",
+      team: [] as { name: string }[],
+    }));
+
+  // Generate recent activities from requests
+  const activities = requests.slice(0, 3).map((req, idx) => ({
+    id: req.id,
+    type: idx === 0 ? "comment" as const : idx === 1 ? "file_approved" as const : "task_completed" as const,
+    title: req.status === "completed" ? "Zadanie ukończone" : req.status === "in_progress" ? "Zadanie w realizacji" : "Nowe zadanie",
+    description: req.title,
+    time: format(new Date(req.updated_at), "d MMM, HH:mm", { locale: pl }),
+    user: { name: req.assigned_member?.name || "System" },
+  }));
 
   const displayName = isTeamMember 
     ? profile?.full_name || "Zespół"
@@ -235,16 +212,32 @@ const Dashboard = () => {
                 Zobacz wszystkie
               </Link>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {projects.slice(0, 2).map((project) => (
-                <ProjectCard key={project.id} {...project} />
-              ))}
-            </div>
+            {projectsLoading ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="h-48 rounded-lg bg-muted animate-pulse" />
+                <div className="h-48 rounded-lg bg-muted animate-pulse" />
+              </div>
+            ) : activeProjects.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {activeProjects.slice(0, 2).map((project) => (
+                  <ProjectCard key={project.id} {...project} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border p-8 text-center">
+                <p className="text-muted-foreground">Brak aktywnych projektów</p>
+                <Link to="/projects" className="text-sm text-primary hover:underline mt-2 inline-block">
+                  Utwórz pierwszy projekt
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Activity */}
           <div className="space-y-4">
-            <RecentActivity activities={activities} />
+            <RecentActivity activities={activities.length > 0 ? activities : [
+              { id: "empty", type: "task_completed" as const, title: "Brak aktywności", description: "Zacznij pracę nad zadaniami", time: "teraz", user: { name: "System" } }
+            ]} />
           </div>
         </div>
 

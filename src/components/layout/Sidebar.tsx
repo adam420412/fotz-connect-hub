@@ -41,6 +41,8 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   const { isTeamMember, signOut, profile, role } = useAuthContext();
 
   const isAdmin = role === "admin";
+  const isManager = role === "manager";
+  const canAccessCRM = isAdmin || isManager;
 
   const clientNav = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -70,7 +72,7 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
-    { icon: Contact, label: "CRM", href: "/crm" },
+    ...(canAccessCRM ? [{ icon: Contact, label: "CRM", href: "/crm" }] : []),
     ...(isAdmin ? [
       { icon: Shield, label: "Panel Admina", href: "/admin" },
       { icon: BarChart3, label: "Raporty", href: "/reports" },
