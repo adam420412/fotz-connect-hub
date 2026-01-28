@@ -39,7 +39,7 @@ export function BulkProjectAssignment({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [selectedProject, setSelectedProject] = useState<string>("none");
   const [isAssigning, setIsAssigning] = useState(false);
 
   const toggleTask = (taskId: string) => {
@@ -79,7 +79,7 @@ export function BulkProjectAssignment({
       queryClient.invalidateQueries({ queryKey: ["client-requests"] });
       onOpenChange(false);
       setSelectedTasks([]);
-      setSelectedProject("");
+      setSelectedProject("none");
     } catch (error: any) {
       toast({
         title: "Błąd",
@@ -160,7 +160,7 @@ export function BulkProjectAssignment({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={selectedTasks.length === 0 || !selectedProject || isAssigning}
+            disabled={selectedTasks.length === 0 || selectedProject === "none" || isAssigning}
           >
             {isAssigning ? (
               <>

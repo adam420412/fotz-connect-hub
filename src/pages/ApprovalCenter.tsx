@@ -69,7 +69,7 @@ const ApprovalCenter = () => {
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderDate, setNewFolderDate] = useState("");
-  const [newFolderClient, setNewFolderClient] = useState<string>("");
+  const [newFolderClient, setNewFolderClient] = useState<string>("none");
   const [draggedFileId, setDraggedFileId] = useState<string | null>(null);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
 
@@ -112,11 +112,11 @@ const ApprovalCenter = () => {
       createFolder({
         name: newFolderName.trim(),
         eventDate: newFolderDate || undefined,
-        clientId: newFolderClient || undefined,
+        clientId: newFolderClient !== "none" ? newFolderClient : undefined,
       });
       setNewFolderName("");
       setNewFolderDate("");
-      setNewFolderClient("");
+      setNewFolderClient("none");
       setCreateFolderOpen(false);
     }
   };
@@ -239,6 +239,7 @@ const ApprovalCenter = () => {
                         <SelectValue placeholder="Wybierz klienta..." />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Brak</SelectItem>
                         {clients.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.company_name || client.full_name || client.email}

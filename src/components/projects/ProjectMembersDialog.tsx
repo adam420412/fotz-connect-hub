@@ -32,7 +32,7 @@ interface ProjectMembersDialogProps {
 
 export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersDialogProps) {
   const [open, setOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("none");
   const { 
     members, 
     isLoading, 
@@ -94,9 +94,9 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
   );
 
   const handleAddMember = () => {
-    if (!selectedUserId) return;
+    if (selectedUserId === "none") return;
     addMemberToProject({ projectId, userId: selectedUserId, projectName });
-    setSelectedUserId("");
+    setSelectedUserId("none");
   };
 
   return (
@@ -122,6 +122,7 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
                   <SelectValue placeholder="Dodaj członka..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Wybierz...</SelectItem>
                   {availableMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name} ({member.email})
@@ -132,7 +133,7 @@ export function ProjectMembersDialog({ projectId, projectName }: ProjectMembersD
               <Button
                 size="sm"
                 onClick={handleAddMember}
-                disabled={!selectedUserId || isAdding}
+                disabled={selectedUserId === "none" || isAdding}
               >
                 {isAdding ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
