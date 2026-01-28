@@ -31,7 +31,7 @@ export function useGoogleCalendar(userId: string | undefined) {
         .from("google_calendar_integrations")
         .select("id, user_id, sync_enabled, last_sync_at, calendar_id")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== "PGRST116") {
         console.error("Error fetching integration:", error);
