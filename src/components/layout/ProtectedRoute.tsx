@@ -7,9 +7,15 @@ interface ProtectedRouteProps {
   children: ReactNode;
   requireTeamMember?: boolean;
   requireAdmin?: boolean;
+  requireManagerOrAdmin?: boolean;
 }
 
-const ProtectedRoute = ({ children, requireTeamMember = false, requireAdmin = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ 
+  children, 
+  requireTeamMember = false, 
+  requireAdmin = false,
+  requireManagerOrAdmin = false 
+}: ProtectedRouteProps) => {
   const { user, isLoading, isTeamMember, role } = useAuthContext();
   const location = useLocation();
 
@@ -26,6 +32,10 @@ const ProtectedRoute = ({ children, requireTeamMember = false, requireAdmin = fa
   }
 
   if (requireAdmin && role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (requireManagerOrAdmin && role !== "admin" && role !== "manager") {
     return <Navigate to="/dashboard" replace />;
   }
 

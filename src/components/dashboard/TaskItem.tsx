@@ -6,7 +6,7 @@ interface TaskItemProps {
   id: string;
   title: string;
   status: "todo" | "in_progress" | "review" | "completed";
-  priority: "low" | "medium" | "high" | "urgent";
+  priority: "low" | "normal" | "medium" | "high" | "urgent";
   dueDate?: string;
   assignee?: string;
   comments?: number;
@@ -17,6 +17,7 @@ interface TaskItemProps {
 
 const priorityConfig = {
   low: { label: "Niski", className: "bg-slate-500/10 text-slate-500" },
+  normal: { label: "Normalny", className: "bg-blue-500/10 text-blue-500" },
   medium: { label: "Średni", className: "bg-blue-500/10 text-blue-500" },
   high: { label: "Wysoki", className: "bg-amber-500/10 text-amber-500" },
   urgent: { label: "Pilne", className: "bg-destructive/10 text-destructive" },
