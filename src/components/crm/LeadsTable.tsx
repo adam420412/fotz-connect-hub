@@ -20,13 +20,12 @@ interface LeadsTableProps {
   onSelectLead: (id: string) => void;
 }
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  new: { label: "Nowy", variant: "default" },
-  contacted: { label: "Kontaktowany", variant: "secondary" },
-  qualified: { label: "Kwalifikowany", variant: "outline" },
-  proposal: { label: "Propozycja", variant: "outline" },
-  won: { label: "Wygrany", variant: "default" },
-  lost: { label: "Przegrany", variant: "destructive" },
+const statusConfig: Record<string, { label: string; className: string }> = {
+  new: { label: "Nowy", className: "bg-blue-500 hover:bg-blue-500 text-white border-transparent" },
+  contacted: { label: "Po kontakcie", className: "bg-yellow-500 hover:bg-yellow-500 text-white border-transparent" },
+  qualified: { label: "Kwalifikowany", className: "bg-green-500 hover:bg-green-500 text-white border-transparent" },
+  nurture: { label: "Nurture", className: "bg-purple-500 hover:bg-purple-500 text-white border-transparent" },
+  lost: { label: "Przegrany", className: "bg-gray-500 hover:bg-gray-500 text-white border-transparent" },
 };
 
 const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
