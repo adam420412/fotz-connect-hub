@@ -34,6 +34,8 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
     probability: "10",
     expected_close_date: "",
     notes: "",
+    next_step: "",
+    next_step_date: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -48,6 +50,8 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
       probability: parseInt(formData.probability) || 10,
       expected_close_date: formData.expected_close_date || null,
       notes: formData.notes || null,
+      next_step: formData.next_step || null,
+      next_step_date: formData.next_step_date || null,
       assigned_to: null,
     });
 
@@ -59,6 +63,8 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
       probability: "10",
       expected_close_date: "",
       notes: "",
+      next_step: "",
+      next_step_date: "",
     });
 
     onOpenChange(false);
