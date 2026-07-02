@@ -114,7 +114,20 @@ const CRM = () => {
             <h1 className="text-3xl font-bold">CRM</h1>
             <p className="text-muted-foreground">Zarządzanie leadami i sprzedażą</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-webhook`;
+                navigator.clipboard.writeText(url).then(
+                  () => toast({ title: "Skopiowano", description: url }),
+                  () => toast({ title: "Błąd", description: "Nie udało się skopiować", variant: "destructive" })
+                );
+              }}
+            >
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Skopiuj URL webhooka
+            </Button>
             <Button variant="outline" onClick={handleExportCSV}>
               <Download className="h-4 w-4 mr-2" />
               Eksport CSV
