@@ -262,7 +262,7 @@ const CRM = () => {
           </TabsContent>
 
           <TabsContent value="deals" className="space-y-4">
-            <DealsKanban deals={deals} leads={leads} isLoading={isLoading} />
+            <DealsKanban deals={filteredDeals} leads={leads} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-4">
