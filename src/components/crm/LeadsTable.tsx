@@ -97,7 +97,7 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
                 <Badge variant="outline">{lead.source}</Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={statusConfig[lead.status]?.variant || "secondary"}>
+                <Badge className={statusConfig[lead.status]?.className || "bg-gray-500 text-white border-transparent"}>
                   {statusConfig[lead.status]?.label || lead.status}
                 </Badge>
               </TableCell>
