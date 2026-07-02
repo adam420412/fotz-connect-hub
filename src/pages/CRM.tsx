@@ -58,12 +58,39 @@ const CRM = () => {
     });
   };
 
+  const matchesNextStep = (nextStepDate: string | null, nextStep: string | null) => {
+    if (nextStepFilter === "all") return true;
+    if (nextStepFilter === "missing") return !nextStep;
+    const status = getNextStepStatus(nextStepDate);
+    if (nextStepFilter === "today") return status === "today";
+    if (nextStepFilter === "overdue") return status === "overdue";
+    return true;
+  };
+
   const filteredLeads = leads.filter(
     (lead) =>
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.company?.toLowerCase().includes(searchQuery.toLowerCase())
+      (lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.company?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      matchesNextStep(lead.next_step_date, lead.next_step)
   );
+
+  const filteredDeals = deals.filter((deal) =>
+    matchesNextStep(deal.next_step_date, deal.next_step)
+  );
+
+  const nextStepCounts = {
+    all: leads.length + deals.length,
+    today:
+      leads.filter((l) => getNextStepStatus(l.next_step_date) === "today").length +
+      deals.filter((d) => getNextStepStatus(d.next_step_date) === "today").length,
+    overdue:
+      leads.filter((l) => getNextStepStatus(l.next_step_date) === "overdue").length +
+      deals.filter((d) => getNextStepStatus(d.next_step_date) === "overdue").length,
+    missing:
+      leads.filter((l) => !l.next_step).length +
+      deals.filter((d) => !d.next_step).length,
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pl-PL", {
