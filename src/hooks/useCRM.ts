@@ -12,6 +12,8 @@ export interface Lead {
   status: string;
   notes: string | null;
   assigned_to: string | null;
+  next_step: string | null;
+  next_step_date: string | null;
   created_at: string;
   updated_at: string;
 }
