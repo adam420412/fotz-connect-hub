@@ -19,11 +19,11 @@ interface SalesFunnelProps {
 
 const LEAD_STAGES = [
   { key: "new", label: "Nowy", color: "bg-blue-500" },
-  { key: "contacted", label: "Kontakt", color: "bg-indigo-500" },
-  { key: "qualified", label: "Kwalifikacja", color: "bg-purple-500" },
-  { key: "proposal", label: "Oferta", color: "bg-pink-500" },
+  { key: "contacted", label: "Po kontakcie", color: "bg-yellow-500" },
+  { key: "qualified", label: "Kwalifikowany", color: "bg-green-500" },
+  { key: "nurture", label: "Nurture", color: "bg-purple-500" },
   { key: "negotiation", label: "Negocjacje", color: "bg-orange-500" },
-  { key: "won", label: "Wygrane", color: "bg-green-500" },
+  { key: "won", label: "Wygrany", color: "bg-green-600" },
 ];
 
 const SalesFunnel = ({ leads, deals }: SalesFunnelProps) => {
