@@ -60,6 +60,7 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
             <TableHead>Firma</TableHead>
             <TableHead>Źródło</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Następny krok</TableHead>
             <TableHead>Data</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
