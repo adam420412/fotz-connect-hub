@@ -35,6 +35,8 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
     source: "manual",
     status: "new",
     notes: "",
+    next_step: "",
+    next_step_date: "",
   });
 
   const existingLead = leadId ? leads.find((l) => l.id === leadId) : null;
