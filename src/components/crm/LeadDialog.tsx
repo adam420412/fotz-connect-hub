@@ -51,6 +51,8 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
         source: existingLead.source,
         status: existingLead.status,
         notes: existingLead.notes || "",
+        next_step: existingLead.next_step || "",
+        next_step_date: existingLead.next_step_date || "",
       });
     } else {
       setFormData({
@@ -61,6 +63,8 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
         source: "manual",
         status: "new",
         notes: "",
+        next_step: "",
+        next_step_date: "",
       });
     }
   }, [existingLead, open]);
@@ -68,23 +72,20 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const payload = {
+      ...formData,
+      phone: formData.phone || null,
+      company: formData.company || null,
+      notes: formData.notes || null,
+      next_step: formData.next_step || null,
+      next_step_date: formData.next_step_date || null,
+      assigned_to: null,
+    };
+
     if (existingLead) {
-      updateLead.mutate({
-        id: existingLead.id,
-        ...formData,
-        phone: formData.phone || null,
-        company: formData.company || null,
-        notes: formData.notes || null,
-        assigned_to: null,
-      });
+      updateLead.mutate({ id: existingLead.id, ...payload });
     } else {
-      createLead.mutate({
-        ...formData,
-        phone: formData.phone || null,
-        company: formData.company || null,
-        notes: formData.notes || null,
-        assigned_to: null,
-      });
+      createLead.mutate(payload);
     }
 
     onOpenChange(false);
