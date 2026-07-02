@@ -173,6 +173,27 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="next_step">Następny krok</Label>
+              <Input
+                id="next_step"
+                value={formData.next_step}
+                onChange={(e) => setFormData({ ...formData, next_step: e.target.value })}
+                placeholder="np. Wysłać ofertę"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="next_step_date">Data następnego kroku</Label>
+              <Input
+                id="next_step_date"
+                type="date"
+                value={formData.next_step_date}
+                onChange={(e) => setFormData({ ...formData, next_step_date: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="notes">Notatki</Label>
             <Textarea
@@ -182,6 +203,7 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
               rows={3}
             />
           </div>
+
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
