@@ -192,6 +192,28 @@ const CRM = () => {
           </div>
         </div>
 
+        {/* Next step filter bar */}
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            { id: "all", label: "Wszystkie", count: nextStepCounts.all, className: "" },
+            { id: "today", label: "Na dziś", count: nextStepCounts.today, className: "data-[active=true]:bg-orange-500 data-[active=true]:text-white data-[active=true]:border-orange-500" },
+            { id: "overdue", label: "Zaległe", count: nextStepCounts.overdue, className: "data-[active=true]:bg-red-500 data-[active=true]:text-white data-[active=true]:border-red-500" },
+            { id: "missing", label: "Bez next stepu", count: nextStepCounts.missing, className: "" },
+          ] as const).map((f) => (
+            <Button
+              key={f.id}
+              variant={nextStepFilter === f.id ? "default" : "outline"}
+              size="sm"
+              data-active={nextStepFilter === f.id}
+              className={f.className}
+              onClick={() => setNextStepFilter(f.id as NextStepFilter)}
+            >
+              {f.label}
+              <Badge variant="secondary" className="ml-2">{f.count}</Badge>
+            </Button>
+          ))}
+        </div>
+
         {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -202,6 +224,7 @@ const CRM = () => {
             className="pl-10"
           />
         </div>
+
 
         {/* Tabs */}
         <Tabs defaultValue="leads" className="space-y-4">
