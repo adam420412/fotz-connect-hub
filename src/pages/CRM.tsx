@@ -82,6 +82,8 @@ const CRM = () => {
     matchesNextStep(deal.next_step_date, deal.next_step)
   );
 
+  const linkedinCount = leads.filter((l) => l.email === "brak@linkedin").length;
+
   const nextStepCounts = {
     all: leads.length + deals.length,
     today:
