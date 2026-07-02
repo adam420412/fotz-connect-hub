@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Phone, Mail, Building, MoreHorizontal } from "lucide-react";
+import { Phone, Mail, Building, MoreHorizontal, Linkedin } from "lucide-react";
 import { Lead } from "@/hooks/useCRM";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
