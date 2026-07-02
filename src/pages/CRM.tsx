@@ -74,7 +74,8 @@ const CRM = () => {
       (lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.company?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      matchesNextStep(lead.next_step_date, lead.next_step)
+      matchesNextStep(lead.next_step_date, lead.next_step) &&
+      (!linkedinOnly || lead.email === "brak@linkedin")
   );
 
   const filteredDeals = deals.filter((deal) =>
