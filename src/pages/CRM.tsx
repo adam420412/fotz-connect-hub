@@ -225,12 +225,25 @@ const CRM = () => {
               size="sm"
               data-active={nextStepFilter === f.id}
               className={f.className}
-              onClick={() => setNextStepFilter(f.id as NextStepFilter)}
+              onClick={() => { setNextStepFilter(f.id as NextStepFilter); setLinkedinOnly(false); }}
             >
               {f.label}
               <Badge variant="secondary" className="ml-2">{f.count}</Badge>
             </Button>
           ))}
+          <Button
+            variant={linkedinOnly ? "default" : "outline"}
+            size="sm"
+            className="ml-auto"
+            onClick={() => {
+              setLinkedinOnly(!linkedinOnly);
+              if (!linkedinOnly) setNextStepFilter("all");
+            }}
+          >
+            <Linkedin className="h-3 w-3 mr-1" />
+            Tylko LinkedIn
+            <Badge variant="secondary" className="ml-2">{linkedinCount}</Badge>
+          </Button>
         </div>
 
         {/* Search */}
