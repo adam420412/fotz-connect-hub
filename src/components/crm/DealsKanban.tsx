@@ -6,6 +6,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { Building, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import NextStepBadge from "./NextStepBadge";
 
 interface DealsKanbanProps {
   deals: Deal[];
