@@ -1,8 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Deal, Lead, useCRM } from "@/hooks/useCRM";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { Building, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
 interface DealsKanbanProps {
   deals: Deal[];
@@ -12,10 +15,10 @@ interface DealsKanbanProps {
 
 const stages = [
   { id: "qualification", label: "Kwalifikacja", color: "bg-blue-500" },
-  { id: "proposal", label: "Propozycja", color: "bg-yellow-500" },
+  { id: "proposal", label: "Oferta", color: "bg-yellow-500" },
   { id: "negotiation", label: "Negocjacje", color: "bg-orange-500" },
-  { id: "closed_won", label: "Wygrane", color: "bg-green-500" },
-  { id: "closed_lost", label: "Przegrane", color: "bg-red-500" },
+  { id: "won", label: "Wygrany", color: "bg-green-500" },
+  { id: "lost", label: "Przegrany", color: "bg-gray-500" },
 ];
 
 const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
@@ -29,10 +32,10 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
     }).format(value);
   };
 
-  const getLeadName = (leadId: string | null) => {
+  const getLeadCompany = (leadId: string | null) => {
     if (!leadId) return null;
     const lead = leads.find((l) => l.id === leadId);
-    return lead?.name || null;
+    return lead?.company || null;
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -98,14 +101,15 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                               snapshot.isDragging ? "shadow-lg rotate-2" : ""
                             }`}
                           >
-                            <CardContent className="p-3">
+                            <CardContent className="p-3 space-y-2">
                               <h4 className="font-medium text-sm">{deal.title}</h4>
-                              {getLeadName(deal.lead_id) && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {getLeadName(deal.lead_id)}
+                              {getLeadCompany(deal.lead_id) && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Building className="h-3 w-3" />
+                                  {getLeadCompany(deal.lead_id)}
                                 </p>
                               )}
-                              <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center justify-between">
                                 <span className="text-sm font-semibold">
                                   {formatCurrency(deal.value)}
                                 </span>
@@ -113,6 +117,12 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                                   {deal.probability}%
                                 </Badge>
                               </div>
+                              {deal.expected_close_date && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {format(new Date(deal.expected_close_date), "d MMM yyyy", { locale: pl })}
+                                </p>
+                              )}
                             </CardContent>
                           </Card>
                         )}

@@ -148,10 +148,10 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="qualification">Kwalifikacja</SelectItem>
-                  <SelectItem value="proposal">Propozycja</SelectItem>
+                  <SelectItem value="proposal">Oferta</SelectItem>
                   <SelectItem value="negotiation">Negocjacje</SelectItem>
-                  <SelectItem value="closed_won">Wygrane</SelectItem>
-                  <SelectItem value="closed_lost">Przegrane</SelectItem>
+                  <SelectItem value="won">Wygrany</SelectItem>
+                  <SelectItem value="lost">Przegrany</SelectItem>
                 </SelectContent>
               </Select>
             </div>

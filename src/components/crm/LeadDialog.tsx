@@ -176,10 +176,9 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">Nowy</SelectItem>
-                  <SelectItem value="contacted">Kontaktowany</SelectItem>
+                  <SelectItem value="contacted">Po kontakcie</SelectItem>
                   <SelectItem value="qualified">Kwalifikowany</SelectItem>
-                  <SelectItem value="proposal">Propozycja</SelectItem>
-                  <SelectItem value="won">Wygrany</SelectItem>
+                  <SelectItem value="nurture">Nurture</SelectItem>
                   <SelectItem value="lost">Przegrany</SelectItem>
                 </SelectContent>
               </Select>

@@ -18,7 +18,7 @@ export function useGoogleCalendar(userId: string | undefined) {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchIntegration = useCallback(async () => {
     if (!userId) {
