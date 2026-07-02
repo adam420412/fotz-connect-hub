@@ -101,14 +101,15 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                               snapshot.isDragging ? "shadow-lg rotate-2" : ""
                             }`}
                           >
-                            <CardContent className="p-3">
+                            <CardContent className="p-3 space-y-2">
                               <h4 className="font-medium text-sm">{deal.title}</h4>
-                              {getLeadName(deal.lead_id) && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {getLeadName(deal.lead_id)}
+                              {getLeadCompany(deal.lead_id) && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Building className="h-3 w-3" />
+                                  {getLeadCompany(deal.lead_id)}
                                 </p>
                               )}
-                              <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center justify-between">
                                 <span className="text-sm font-semibold">
                                   {formatCurrency(deal.value)}
                                 </span>
@@ -116,6 +117,12 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                                   {deal.probability}%
                                 </Badge>
                               </div>
+                              {deal.expected_close_date && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {format(new Date(deal.expected_close_date), "d MMM yyyy", { locale: pl })}
+                                </p>
+                              )}
                             </CardContent>
                           </Card>
                         )}
