@@ -29,10 +29,14 @@ import DealDialog from "@/components/crm/DealDialog";
 import SalesFunnel from "@/components/crm/SalesFunnel";
 import { exportLeadsToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
+import { getNextStepStatus } from "@/components/crm/NextStepBadge";
+
+type NextStepFilter = "all" | "today" | "overdue" | "missing";
 
 const CRM = () => {
   const { leads, deals, bookings, contactHistory, stats, isLoading } = useCRM();
   const [searchQuery, setSearchQuery] = useState("");
+  const [nextStepFilter, setNextStepFilter] = useState<NextStepFilter>("all");
   const [showLeadDialog, setShowLeadDialog] = useState(false);
   const [showDealDialog, setShowDealDialog] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
