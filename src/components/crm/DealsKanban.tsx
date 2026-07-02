@@ -6,6 +6,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { Building, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import NextStepBadge from "./NextStepBadge";
 
 interface DealsKanbanProps {
   deals: Deal[];
@@ -122,6 +123,14 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                                   <Calendar className="h-3 w-3" />
                                   {format(new Date(deal.expected_close_date), "d MMM yyyy", { locale: pl })}
                                 </p>
+                              )}
+                              {deal.next_step_date && (
+                                <div className="pt-1">
+                                  <NextStepBadge date={deal.next_step_date} compact />
+                                  {deal.next_step && (
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{deal.next_step}</p>
+                                  )}
+                                </div>
                               )}
                             </CardContent>
                           </Card>

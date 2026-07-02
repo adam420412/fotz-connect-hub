@@ -29,10 +29,14 @@ import DealDialog from "@/components/crm/DealDialog";
 import SalesFunnel from "@/components/crm/SalesFunnel";
 import { exportLeadsToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
+import { getNextStepStatus } from "@/components/crm/NextStepBadge";
+
+type NextStepFilter = "all" | "today" | "overdue" | "missing";
 
 const CRM = () => {
   const { leads, deals, bookings, contactHistory, stats, isLoading } = useCRM();
   const [searchQuery, setSearchQuery] = useState("");
+  const [nextStepFilter, setNextStepFilter] = useState<NextStepFilter>("all");
   const [showLeadDialog, setShowLeadDialog] = useState(false);
   const [showDealDialog, setShowDealDialog] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -54,12 +58,39 @@ const CRM = () => {
     });
   };
 
+  const matchesNextStep = (nextStepDate: string | null, nextStep: string | null) => {
+    if (nextStepFilter === "all") return true;
+    if (nextStepFilter === "missing") return !nextStep;
+    const status = getNextStepStatus(nextStepDate);
+    if (nextStepFilter === "today") return status === "today";
+    if (nextStepFilter === "overdue") return status === "overdue";
+    return true;
+  };
+
   const filteredLeads = leads.filter(
     (lead) =>
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.company?.toLowerCase().includes(searchQuery.toLowerCase())
+      (lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.company?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      matchesNextStep(lead.next_step_date, lead.next_step)
   );
+
+  const filteredDeals = deals.filter((deal) =>
+    matchesNextStep(deal.next_step_date, deal.next_step)
+  );
+
+  const nextStepCounts = {
+    all: leads.length + deals.length,
+    today:
+      leads.filter((l) => getNextStepStatus(l.next_step_date) === "today").length +
+      deals.filter((d) => getNextStepStatus(d.next_step_date) === "today").length,
+    overdue:
+      leads.filter((l) => getNextStepStatus(l.next_step_date) === "overdue").length +
+      deals.filter((d) => getNextStepStatus(d.next_step_date) === "overdue").length,
+    missing:
+      leads.filter((l) => !l.next_step).length +
+      deals.filter((d) => !d.next_step).length,
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pl-PL", {
@@ -161,6 +192,28 @@ const CRM = () => {
           </div>
         </div>
 
+        {/* Next step filter bar */}
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            { id: "all", label: "Wszystkie", count: nextStepCounts.all, className: "" },
+            { id: "today", label: "Na dziś", count: nextStepCounts.today, className: "data-[active=true]:bg-orange-500 data-[active=true]:text-white data-[active=true]:border-orange-500" },
+            { id: "overdue", label: "Zaległe", count: nextStepCounts.overdue, className: "data-[active=true]:bg-red-500 data-[active=true]:text-white data-[active=true]:border-red-500" },
+            { id: "missing", label: "Bez next stepu", count: nextStepCounts.missing, className: "" },
+          ] as const).map((f) => (
+            <Button
+              key={f.id}
+              variant={nextStepFilter === f.id ? "default" : "outline"}
+              size="sm"
+              data-active={nextStepFilter === f.id}
+              className={f.className}
+              onClick={() => setNextStepFilter(f.id as NextStepFilter)}
+            >
+              {f.label}
+              <Badge variant="secondary" className="ml-2">{f.count}</Badge>
+            </Button>
+          ))}
+        </div>
+
         {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -171,6 +224,7 @@ const CRM = () => {
             className="pl-10"
           />
         </div>
+
 
         {/* Tabs */}
         <Tabs defaultValue="leads" className="space-y-4">
@@ -208,7 +262,7 @@ const CRM = () => {
           </TabsContent>
 
           <TabsContent value="deals" className="space-y-4">
-            <DealsKanban deals={deals} leads={leads} isLoading={isLoading} />
+            <DealsKanban deals={filteredDeals} leads={leads} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-4">

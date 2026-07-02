@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCRM } from "@/hooks/useCRM";
+import NextStepBadge from "./NextStepBadge";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -59,6 +60,7 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
             <TableHead>Firma</TableHead>
             <TableHead>Źródło</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Następny krok</TableHead>
             <TableHead>Data</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
@@ -100,6 +102,14 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
                 <Badge className={statusConfig[lead.status]?.className || "bg-gray-500 text-white border-transparent"}>
                   {statusConfig[lead.status]?.label || lead.status}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <NextStepBadge date={lead.next_step_date} />
+                  {lead.next_step && (
+                    <span className="text-xs text-muted-foreground line-clamp-1">{lead.next_step}</span>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {format(new Date(lead.created_at), "d MMM yyyy", { locale: pl })}

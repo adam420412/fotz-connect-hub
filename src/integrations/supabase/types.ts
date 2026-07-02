@@ -293,6 +293,8 @@ export type Database = {
           expected_close_date: string | null
           id: string
           lead_id: string | null
+          next_step: string | null
+          next_step_date: string | null
           notes: string | null
           probability: number | null
           stage: string
@@ -307,6 +309,8 @@ export type Database = {
           expected_close_date?: string | null
           id?: string
           lead_id?: string | null
+          next_step?: string | null
+          next_step_date?: string | null
           notes?: string | null
           probability?: number | null
           stage?: string
@@ -321,6 +325,8 @@ export type Database = {
           expected_close_date?: string | null
           id?: string
           lead_id?: string | null
+          next_step?: string | null
+          next_step_date?: string | null
           notes?: string | null
           probability?: number | null
           stage?: string
@@ -529,6 +535,8 @@ export type Database = {
           email: string
           id: string
           name: string
+          next_step: string | null
+          next_step_date: string | null
           notes: string | null
           phone: string | null
           source: string
@@ -542,6 +550,8 @@ export type Database = {
           email: string
           id?: string
           name: string
+          next_step?: string | null
+          next_step_date?: string | null
           notes?: string | null
           phone?: string | null
           source?: string
@@ -555,6 +565,8 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          next_step?: string | null
+          next_step_date?: string | null
           notes?: string | null
           phone?: string | null
           source?: string
