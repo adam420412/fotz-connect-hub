@@ -97,9 +97,98 @@ serve(async (req) => {
       },
     });
 
-    const payload: LeadPayload = await req.json();
-    
+    const payload: any = await req.json();
+
     console.log("Received webhook payload:", JSON.stringify(payload));
+
+    // Flat payload mode: { name, email, phone, company, source, notes, utm_source, utm_campaign }
+    if (!payload.type && !payload.data) {
+      const {
+        name,
+        email,
+        phone,
+        company,
+        source,
+        notes,
+        utm_source,
+        utm_campaign,
+      } = payload || {};
+
+      if (!name || !email) {
+        return new Response(
+          JSON.stringify({ error: "Missing required fields: name and email are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const utmSuffix =
+        utm_source || utm_campaign
+          ? ` [utm: ${utm_source || "-"}/${utm_campaign || "-"}]`
+          : "";
+      const combinedNotes = `${notes || ""}${utmSuffix}`.trim() || null;
+
+      // Dedup by email (unless it's the placeholder brak@linkedin)
+      const isPlaceholder = email === "brak@linkedin";
+      let existingLead: { id: string } | null = null;
+      if (!isPlaceholder) {
+        const { data: existing } = await supabase
+          .from("leads")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
+        existingLead = existing;
+      }
+
+      if (existingLead) {
+        await supabase
+          .from("contact_history")
+          .insert({
+            lead_id: existingLead.id,
+            contact_type: "note",
+            subject: null,
+            content: combinedNotes || "(brak treści)",
+            contact_date: new Date().toISOString(),
+          });
+
+        await supabase
+          .from("leads")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", existingLead.id);
+
+        console.log("Deduped lead, appended contact_history:", existingLead.id);
+
+        return new Response(
+          JSON.stringify({ ok: true, lead_id: existingLead.id, deduped: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: newLead, error: insertError } = await supabase
+        .from("leads")
+        .insert({
+          name,
+          email,
+          phone: phone || null,
+          company: company || null,
+          source: source || "fotz.pl",
+          notes: combinedNotes,
+          status: "new",
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Error inserting lead:", insertError);
+        throw insertError;
+      }
+
+      await sendWebhookNotification("lead", { name, email, phone, company, source });
+
+      return new Response(
+        JSON.stringify({ ok: true, lead_id: newLead.id }),
+        { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!payload.type || !payload.data) {
       return new Response(
