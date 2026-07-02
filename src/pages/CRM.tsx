@@ -18,7 +18,8 @@ import {
   Building,
   Clock,
   Download,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Linkedin
 } from "lucide-react";
 import { useCRM } from "@/hooks/useCRM";
 import LeadsTable from "@/components/crm/LeadsTable";
@@ -38,6 +39,7 @@ const CRM = () => {
   const { leads, deals, bookings, contactHistory, stats, isLoading } = useCRM();
   const [searchQuery, setSearchQuery] = useState("");
   const [nextStepFilter, setNextStepFilter] = useState<NextStepFilter>("all");
+  const [linkedinOnly, setLinkedinOnly] = useState(false);
   const [showLeadDialog, setShowLeadDialog] = useState(false);
   const [showDealDialog, setShowDealDialog] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -73,12 +75,15 @@ const CRM = () => {
       (lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.company?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      matchesNextStep(lead.next_step_date, lead.next_step)
+      matchesNextStep(lead.next_step_date, lead.next_step) &&
+      (!linkedinOnly || lead.email === "brak@linkedin")
   );
 
   const filteredDeals = deals.filter((deal) =>
     matchesNextStep(deal.next_step_date, deal.next_step)
   );
+
+  const linkedinCount = leads.filter((l) => l.email === "brak@linkedin").length;
 
   const nextStepCounts = {
     all: leads.length + deals.length,
@@ -220,12 +225,25 @@ const CRM = () => {
               size="sm"
               data-active={nextStepFilter === f.id}
               className={f.className}
-              onClick={() => setNextStepFilter(f.id as NextStepFilter)}
+              onClick={() => { setNextStepFilter(f.id as NextStepFilter); setLinkedinOnly(false); }}
             >
               {f.label}
               <Badge variant="secondary" className="ml-2">{f.count}</Badge>
             </Button>
           ))}
+          <Button
+            variant={linkedinOnly ? "default" : "outline"}
+            size="sm"
+            className="ml-auto"
+            onClick={() => {
+              setLinkedinOnly(!linkedinOnly);
+              if (!linkedinOnly) setNextStepFilter("all");
+            }}
+          >
+            <Linkedin className="h-3 w-3 mr-1" />
+            Tylko LinkedIn
+            <Badge variant="secondary" className="ml-2">{linkedinCount}</Badge>
+          </Button>
         </div>
 
         {/* Search */}

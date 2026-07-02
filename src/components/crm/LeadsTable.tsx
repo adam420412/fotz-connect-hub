@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Phone, Mail, Building, MoreHorizontal } from "lucide-react";
+import { Phone, Mail, Building, MoreHorizontal, Linkedin } from "lucide-react";
 import { Lead } from "@/hooks/useCRM";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -76,8 +76,17 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
               <TableCell>
                 <div className="flex flex-col gap-1">
                   <span className="flex items-center gap-1 text-sm">
-                    <Mail className="h-3 w-3" />
-                    {lead.email}
+                    {lead.email === "brak@linkedin" ? (
+                      <>
+                        <Linkedin className="h-3 w-3 text-[#0A66C2]" />
+                        <span className="text-muted-foreground text-xs">LinkedIn</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-3 w-3" />
+                        {lead.email}
+                      </>
+                    )}
                   </span>
                   {lead.phone && (
                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
