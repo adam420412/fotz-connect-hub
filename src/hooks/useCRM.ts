@@ -28,6 +28,8 @@ export interface Deal {
   probability: number;
   expected_close_date: string | null;
   assigned_to: string | null;
+  next_step: string | null;
+  next_step_date: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
