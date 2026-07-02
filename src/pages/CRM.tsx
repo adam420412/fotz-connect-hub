@@ -18,7 +18,8 @@ import {
   Building,
   Clock,
   Download,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Linkedin
 } from "lucide-react";
 import { useCRM } from "@/hooks/useCRM";
 import LeadsTable from "@/components/crm/LeadsTable";
