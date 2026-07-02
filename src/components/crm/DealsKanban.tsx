@@ -124,6 +124,14 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                                   {format(new Date(deal.expected_close_date), "d MMM yyyy", { locale: pl })}
                                 </p>
                               )}
+                              {deal.next_step_date && (
+                                <div className="pt-1">
+                                  <NextStepBadge date={deal.next_step_date} compact />
+                                  {deal.next_step && (
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{deal.next_step}</p>
+                                  )}
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         )}
