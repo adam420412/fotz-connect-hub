@@ -17,7 +17,8 @@ import {
   Mail,
   Building,
   Clock,
-  Download
+  Download,
+  Link as LinkIcon
 } from "lucide-react";
 import { useCRM } from "@/hooks/useCRM";
 import LeadsTable from "@/components/crm/LeadsTable";
