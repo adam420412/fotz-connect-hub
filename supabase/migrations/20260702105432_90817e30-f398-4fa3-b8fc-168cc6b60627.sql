@@ -1,0 +1,2 @@
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS next_step TEXT, ADD COLUMN IF NOT EXISTS next_step_date DATE;
+ALTER TABLE public.deals ADD COLUMN IF NOT EXISTS next_step TEXT, ADD COLUMN IF NOT EXISTS next_step_date DATE;
