@@ -101,8 +101,13 @@ serve(async (req) => {
 
     console.log("Received webhook payload:", JSON.stringify(payload));
 
-    // Flat payload mode: { name, email, phone, company, source, notes, utm_source, utm_campaign }
-    if (!payload.type && !payload.data) {
+    // Detect nested lead format {type:"lead", data:{...}} — treat as flat lead
+    const isNestedLead =
+      payload && payload.type === "lead" && payload.data && typeof payload.data === "object";
+    const isFlat = payload && !payload.type && !payload.data;
+
+    if (isFlat || isNestedLead) {
+      const src = isNestedLead ? payload.data : payload;
       const {
         name,
         email,
@@ -112,7 +117,10 @@ serve(async (req) => {
         notes,
         utm_source,
         utm_campaign,
-      } = payload || {};
+        utm_medium,
+        utm_content,
+        utm_term,
+      } = src || {};
 
       if (!name || !email) {
         return new Response(
@@ -121,10 +129,14 @@ serve(async (req) => {
         );
       }
 
-      const utmSuffix =
-        utm_source || utm_campaign
-          ? ` [utm: ${utm_source || "-"}/${utm_campaign || "-"}]`
-          : "";
+      const utmParts: string[] = [];
+      if (utm_source || utm_campaign) {
+        utmParts.push(`[utm: ${utm_source || "-"}/${utm_campaign || "-"}]`);
+      }
+      if (utm_medium) utmParts.push(`[utm_medium: ${utm_medium}]`);
+      if (utm_content) utmParts.push(`[utm_content: ${utm_content}]`);
+      if (utm_term) utmParts.push(`[utm_term: ${utm_term}]`);
+      const utmSuffix = utmParts.length ? ` ${utmParts.join(" ")}` : "";
       const combinedNotes = `${notes || ""}${utmSuffix}`.trim() || null;
 
       // Dedup by email (unless it's the placeholder brak@linkedin)
@@ -196,6 +208,7 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     const { type, data } = payload;
 
