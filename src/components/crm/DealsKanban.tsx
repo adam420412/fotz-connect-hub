@@ -1,8 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Deal, Lead, useCRM } from "@/hooks/useCRM";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { Building, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 
 interface DealsKanbanProps {
   deals: Deal[];
@@ -12,10 +15,10 @@ interface DealsKanbanProps {
 
 const stages = [
   { id: "qualification", label: "Kwalifikacja", color: "bg-blue-500" },
-  { id: "proposal", label: "Propozycja", color: "bg-yellow-500" },
+  { id: "proposal", label: "Oferta", color: "bg-yellow-500" },
   { id: "negotiation", label: "Negocjacje", color: "bg-orange-500" },
-  { id: "closed_won", label: "Wygrane", color: "bg-green-500" },
-  { id: "closed_lost", label: "Przegrane", color: "bg-red-500" },
+  { id: "won", label: "Wygrany", color: "bg-green-500" },
+  { id: "lost", label: "Przegrany", color: "bg-gray-500" },
 ];
 
 const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
