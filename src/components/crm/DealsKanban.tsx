@@ -32,10 +32,10 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
     }).format(value);
   };
 
-  const getLeadName = (leadId: string | null) => {
+  const getLeadCompany = (leadId: string | null) => {
     if (!leadId) return null;
     const lead = leads.find((l) => l.id === leadId);
-    return lead?.name || null;
+    return lead?.company || null;
   };
 
   const handleDragEnd = (result: DropResult) => {
