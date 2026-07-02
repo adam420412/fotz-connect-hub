@@ -38,6 +38,7 @@ const CRM = () => {
   const { leads, deals, bookings, contactHistory, stats, isLoading } = useCRM();
   const [searchQuery, setSearchQuery] = useState("");
   const [nextStepFilter, setNextStepFilter] = useState<NextStepFilter>("all");
+  const [linkedinOnly, setLinkedinOnly] = useState(false);
   const [showLeadDialog, setShowLeadDialog] = useState(false);
   const [showDealDialog, setShowDealDialog] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
