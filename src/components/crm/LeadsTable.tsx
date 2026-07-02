@@ -103,6 +103,14 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
                   {statusConfig[lead.status]?.label || lead.status}
                 </Badge>
               </TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <NextStepBadge date={lead.next_step_date} />
+                  {lead.next_step && (
+                    <span className="text-xs text-muted-foreground line-clamp-1">{lead.next_step}</span>
+                  )}
+                </div>
+              </TableCell>
               <TableCell className="text-muted-foreground">
                 {format(new Date(lead.created_at), "d MMM yyyy", { locale: pl })}
               </TableCell>
