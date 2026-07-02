@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCRM } from "@/hooks/useCRM";
+import NextStepBadge from "./NextStepBadge";
 
 interface LeadsTableProps {
   leads: Lead[];
