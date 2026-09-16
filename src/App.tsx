@@ -31,6 +31,7 @@ import Reports from "./pages/Reports";
 import TeamCalendar from "./pages/TeamCalendar";
 import ProjectTemplates from "./pages/ProjectTemplates";
 import CRM from "./pages/CRM";
+import GrowthOS from "./pages/GrowthOS";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import AdminKPIDashboard from "./pages/AdminKPIDashboard";
 import ClientPortal from "./pages/ClientPortal";
@@ -64,7 +65,7 @@ const App = () => (
                 <Route path="/marketing-news" element={<ProtectedRoute requireTeamMember><MarketingNews /></ProtectedRoute>} />
                 <Route path="/post-schedule" element={<ProtectedRoute><PostSchedule /></ProtectedRoute>} />
                 <Route path="/new-request" element={<ProtectedRoute><NewRequest /></ProtectedRoute>} />
-                <Route path="/invitations" element={<ProtectedRoute requireTeamMember><Invitations /></ProtectedRoute>} />
+                <Route path="/invitations" element={<ProtectedRoute requireAdmin><Invitations /></ProtectedRoute>} />
                 <Route path="/approval-center" element={<ProtectedRoute><ApprovalCenter /></ProtectedRoute>} />
                 <Route path="/time-tracking" element={<ProtectedRoute requireTeamMember><TimeTracking /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
@@ -72,6 +73,7 @@ const App = () => (
                 <Route path="/team-calendar" element={<ProtectedRoute requireTeamMember><TeamCalendar /></ProtectedRoute>} />
                 <Route path="/templates" element={<ProtectedRoute requireTeamMember><ProjectTemplates /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute requireManagerOrAdmin><CRM /></ProtectedRoute>} />
+                <Route path="/growth-os" element={<ProtectedRoute requireManagerOrAdmin><GrowthOS /></ProtectedRoute>} />
                 <Route path="/employee-dashboard" element={<ProtectedRoute requireTeamMember><EmployeeDashboard /></ProtectedRoute>} />
                 <Route path="/admin-kpi" element={<ProtectedRoute requireAdmin><AdminKPIDashboard /></ProtectedRoute>} />
                 <Route path="/client-portal" element={<ProtectedRoute><ClientPortal /></ProtectedRoute>} />

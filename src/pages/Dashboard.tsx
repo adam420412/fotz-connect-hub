@@ -39,6 +39,7 @@ import {
   Legend,
 } from "recharts";
 import { useProjectFiles } from "@/hooks/useProjectFiles";
+import { GROWTH_SOURCE_LABELS, normalizeLegacySource } from "@/lib/growthSources";
 
 const STAGE_LABELS: Record<string, string> = {
   qualification: "Kwalifikacja",
@@ -46,14 +47,6 @@ const STAGE_LABELS: Record<string, string> = {
   negotiation: "Negocjacje",
   won: "Wygrany",
   lost: "Przegrany",
-};
-
-const SOURCE_LABELS: Record<string, string> = {
-  manual: "Ręczne",
-  "fotz.pl": "fotz.pl",
-  referral: "Polecenie",
-  social: "Social media",
-  other: "Inne",
 };
 
 const PIE_COLORS = ["#103053", "#741443", "#3B82F6", "#F59E0B", "#10B981", "#8B5CF6"];
@@ -168,10 +161,11 @@ const Dashboard = () => {
   // Leads by source (pie)
   const sourceMap = new Map<string, number>();
   leads.forEach((l) => {
-    sourceMap.set(l.source, (sourceMap.get(l.source) || 0) + 1);
+    const channel = l.source_channel || normalizeLegacySource(l.source);
+    sourceMap.set(channel, (sourceMap.get(channel) || 0) + 1);
   });
   const leadsBySource = Array.from(sourceMap.entries()).map(([k, v]) => ({
-    name: SOURCE_LABELS[k] || k,
+    name: GROWTH_SOURCE_LABELS[k] || k,
     value: v,
   }));
 
@@ -194,7 +188,7 @@ const Dashboard = () => {
       id: l.id,
       kind: "lead" as const,
       title: l.name,
-      subtitle: l.company || l.email,
+      subtitle: l.company || l.email || l.external_url || "Brak danych kontaktowych",
       nextStep: l.next_step,
     }));
 

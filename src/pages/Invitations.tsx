@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useInvitations } from "@/hooks/useInvitations";
+import { useInvitations, type Invitation } from "@/hooks/useInvitations";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Copy, Trash2, UserPlus, Clock, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -53,7 +53,7 @@ const Invitations = () => {
   };
 
   const copyInvitationLink = (token: string) => {
-    const link = `${window.location.origin}/auth?token=${token}`;
+    const link = `${window.location.origin}/auth?invite=${encodeURIComponent(token)}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Skopiowano",
@@ -61,7 +61,7 @@ const Invitations = () => {
     });
   };
 
-  const getStatusBadge = (invitation: any) => {
+  const getStatusBadge = (invitation: Invitation) => {
     if (invitation.used_at) {
       return (
         <Badge variant="default" className="bg-green-500/10 text-green-500 border-green-500/20">

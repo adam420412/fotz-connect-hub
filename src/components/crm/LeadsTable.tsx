@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCRM } from "@/hooks/useCRM";
 import NextStepBadge from "./NextStepBadge";
+import { GROWTH_SOURCE_LABELS, normalizeLegacySource } from "@/lib/growthSources";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -59,6 +60,7 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
             <TableHead>Kontakt</TableHead>
             <TableHead>Firma</TableHead>
             <TableHead>Źródło</TableHead>
+            <TableHead>Score</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Następny krok</TableHead>
             <TableHead>Data</TableHead>
@@ -66,7 +68,10 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leads.map((lead) => (
+          {leads.map((lead) => {
+            const channel = lead.source_channel || normalizeLegacySource(lead.source);
+            const isLinkedIn = channel === "linkedin_kanbox";
+            return (
             <TableRow 
               key={lead.id} 
               className="cursor-pointer hover:bg-muted/50"
@@ -76,10 +81,22 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
               <TableCell>
                 <div className="flex flex-col gap-1">
                   <span className="flex items-center gap-1 text-sm">
-                    {lead.email === "brak@linkedin" ? (
+                    {!lead.email || lead.email === "brak@linkedin" ? (
                       <>
                         <Linkedin className="h-3 w-3 text-[#0A66C2]" />
-                        <span className="text-muted-foreground text-xs">LinkedIn</span>
+                        {lead.external_url ? (
+                          <a
+                            href={lead.external_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#0A66C2] text-xs hover:underline"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            Otwórz profil
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">{isLinkedIn ? "LinkedIn" : "Brak emaila"}</span>
+                        )}
                       </>
                     ) : (
                       <>
@@ -105,7 +122,10 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant="outline">{lead.source}</Badge>
+                <Badge variant="outline">{GROWTH_SOURCE_LABELS[channel] || lead.source_detail || lead.source}</Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant={lead.lead_score >= 60 ? "default" : "secondary"}>{lead.lead_score}/100</Badge>
               </TableCell>
               <TableCell>
                 <Badge className={statusConfig[lead.status]?.className || "bg-gray-500 text-white border-transparent"}>
@@ -156,7 +176,8 @@ const LeadsTable = ({ leads, isLoading, onSelectLead }: LeadsTableProps) => {
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatFileSize } from "@/hooks/useProjectFiles";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export interface BriefAttachment {
   id: string;
@@ -25,6 +26,7 @@ const BriefAttachments = ({
   onAttachmentsChange,
   maxFiles = 5,
 }: BriefAttachmentsProps) => {
+  const { user } = useAuthContext();
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
@@ -40,8 +42,13 @@ const BriefAttachments = ({
 
   const uploadFile = async (file: File): Promise<BriefAttachment | null> => {
     try {
+      if (!user) throw new Error("Authentication required");
+
       const timestamp = Date.now();
-      const storagePath = `brief-attachments/${timestamp}_${file.name}`;
+      const safeName = file.name
+        .replace(/[^a-zA-Z0-9._-]+/g, "_")
+        .slice(-180) || "file";
+      const storagePath = `brief-attachments/${user.id}/${timestamp}_${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("project-files")
@@ -97,18 +104,15 @@ const BriefAttachments = ({
     }
   };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleFiles(e.dataTransfer.files);
-      }
-    },
-    [attachments, maxFiles]
-  );
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

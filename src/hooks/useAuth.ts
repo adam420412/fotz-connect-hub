@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { AuthError, User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "manager" | "employee" | "client";
@@ -117,7 +117,12 @@ export function useAuth() {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    invitationToken: string,
+  ): Promise<{ error: AuthError | null }> => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -127,6 +132,7 @@ export function useAuth() {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          invite_token: invitationToken,
         },
       },
     });

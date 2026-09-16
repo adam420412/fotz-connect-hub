@@ -1,3 +1,4 @@
+import type { Json } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -5,10 +6,31 @@ import { useToast } from "@/hooks/use-toast";
 export interface Lead {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   company: string | null;
   source: string;
+  source_channel: string;
+  source_detail: string | null;
+  source_provider: string | null;
+  external_id: string | null;
+  external_url: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  gclid: string | null;
+  fbclid: string | null;
+  msclkid: string | null;
+  landing_page: string | null;
+  first_touch_at: string;
+  last_touch_at: string;
+  lead_score: number;
+  consent_marketing: boolean;
+  consent_source: string | null;
+  consent_at: string | null;
+  metadata: Record<string, Json | undefined>;
   status: string;
   notes: string | null;
   assigned_to: string | null;
@@ -17,6 +39,24 @@ export interface Lead {
   created_at: string;
   updated_at: string;
 }
+
+export type CreateLeadInput = {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  source: string;
+  source_channel?: string;
+  source_detail?: string | null;
+  source_provider?: string | null;
+  external_id?: string | null;
+  external_url?: string | null;
+  status: string;
+  notes?: string | null;
+  assigned_to?: string | null;
+  next_step?: string | null;
+  next_step_date?: string | null;
+};
 
 export interface Deal {
   id: string;
@@ -33,6 +73,8 @@ export interface Deal {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  offer_code?: string | null;
+  won_at?: string | null;
   lead?: Lead;
 }
 
@@ -126,7 +168,7 @@ export const useCRM = () => {
 
   // Create lead
   const createLead = useMutation({
-    mutationFn: async (lead: Omit<Lead, "id" | "created_at" | "updated_at">) => {
+    mutationFn: async (lead: CreateLeadInput) => {
       const { data, error } = await supabase
         .from("leads")
         .insert(lead)
