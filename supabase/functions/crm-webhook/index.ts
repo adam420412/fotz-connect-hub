@@ -3,6 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type JsonObject = Record<string, unknown>;
 
+// Preserve the instantiated client's schema defaults when retaining it for error handling.
+const createServiceClient = (url: string, key: string) => createClient(url, key, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
 type NormalizedEvent = {
   eventType: "lead.captured" | "booking.created" | "lead.touchpoint";
   provider: string;
@@ -432,7 +437,7 @@ serve(async (req) => {
   }
 
   let eventId: string | null = null;
-  let supabase: ReturnType<typeof createClient> | null = null;
+  let supabase: ReturnType<typeof createServiceClient> | null = null;
 
   try {
     const rawBody = await req.text();
@@ -449,7 +454,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) throw new Error("SUPABASE_SERVER_CONFIG_MISSING");
-    supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
+    supabase = createServiceClient(supabaseUrl, serviceRoleKey);
 
     const { data: insertedEvent, error: eventInsertError } = await supabase
       .from("integration_events")
