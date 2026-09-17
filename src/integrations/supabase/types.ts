@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -61,13 +61,20 @@ export type Database = {
           client_name: string
           client_phone: string | null
           created_at: string
+          external_event_id: string | null
           id: string
+          landing_page: string | null
           lead_id: string | null
+          metadata: Json
           notes: string | null
           service_type: string
           source: string | null
           status: string
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           booking_date: string
@@ -76,13 +83,20 @@ export type Database = {
           client_name: string
           client_phone?: string | null
           created_at?: string
+          external_event_id?: string | null
           id?: string
+          landing_page?: string | null
           lead_id?: string | null
+          metadata?: Json
           notes?: string | null
           service_type?: string
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           booking_date?: string
@@ -91,13 +105,20 @@ export type Database = {
           client_name?: string
           client_phone?: string | null
           created_at?: string
+          external_event_id?: string | null
           id?: string
+          landing_page?: string | null
           lead_id?: string | null
+          metadata?: Json
           notes?: string | null
           service_type?: string
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -296,11 +317,13 @@ export type Database = {
           next_step: string | null
           next_step_date: string | null
           notes: string | null
+          offer_code: string | null
           probability: number | null
           stage: string
           title: string
           updated_at: string
           value: number | null
+          won_at: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -312,11 +335,13 @@ export type Database = {
           next_step?: string | null
           next_step_date?: string | null
           notes?: string | null
+          offer_code?: string | null
           probability?: number | null
           stage?: string
           title: string
           updated_at?: string
           value?: number | null
+          won_at?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -328,11 +353,13 @@ export type Database = {
           next_step?: string | null
           next_step_date?: string | null
           notes?: string | null
+          offer_code?: string | null
           probability?: number | null
           stage?: string
           title?: string
           updated_at?: string
           value?: number | null
+          won_at?: string | null
         }
         Relationships: [
           {
@@ -488,42 +515,6 @@ export type Database = {
           token_expires_at?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      invitations: {
-        Row: {
-          company_name: string | null
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string | null
-          role: Database["public"]["Enums"]["app_role"]
-          token: string
-          used_at: string | null
-        }
-        Insert: {
-          company_name?: string | null
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-          token?: string
-          used_at?: string | null
-        }
-        Update: {
-          company_name?: string | null
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-          token?: string
-          used_at?: string | null
         }
         Relationships: []
       }
@@ -703,6 +694,42 @@ export type Database = {
         }
         Relationships: []
       }
+      invitations: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       lead_touchpoints: {
         Row: {
           campaign_id: string | null
@@ -816,10 +843,10 @@ export type Database = {
         Row: {
           assigned_to: string | null
           company: string | null
-          created_at: string
           consent_at: string | null
           consent_marketing: boolean
           consent_source: string | null
+          created_at: string
           email: string | null
           email_normalized: string | null
           external_id: string | null
@@ -854,10 +881,10 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           company?: string | null
-          created_at?: string
           consent_at?: string | null
           consent_marketing?: boolean
           consent_source?: string | null
+          created_at?: string
           email?: string | null
           email_normalized?: string | null
           external_id?: string | null
@@ -892,10 +919,10 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           company?: string | null
-          created_at?: string
           consent_at?: string | null
           consent_marketing?: boolean
           consent_source?: string | null
+          created_at?: string
           email?: string | null
           email_normalized?: string | null
           external_id?: string | null
@@ -1312,45 +1339,72 @@ export type Database = {
       scheduled_posts: {
         Row: {
           author_id: string | null
+          campaign_id: string | null
           client_name: string | null
           content: string
+          content_key: string | null
+          content_pillar: string | null
           created_at: string
+          cta_keyword: string | null
+          funnel_stage: string | null
           hashtags: string | null
           id: string
+          organic_metrics: Json
           platform: string
+          published_at: string | null
+          published_url: string | null
           scheduled_date: string
           scheduled_time: string | null
           status: string
           title: string
           updated_at: string
+          utm_content: string | null
         }
         Insert: {
           author_id?: string | null
+          campaign_id?: string | null
           client_name?: string | null
           content: string
+          content_key?: string | null
+          content_pillar?: string | null
           created_at?: string
+          cta_keyword?: string | null
+          funnel_stage?: string | null
           hashtags?: string | null
           id?: string
+          organic_metrics?: Json
           platform: string
+          published_at?: string | null
+          published_url?: string | null
           scheduled_date: string
           scheduled_time?: string | null
           status?: string
           title: string
           updated_at?: string
+          utm_content?: string | null
         }
         Update: {
           author_id?: string | null
+          campaign_id?: string | null
           client_name?: string | null
           content?: string
+          content_key?: string | null
+          content_pillar?: string | null
           created_at?: string
+          cta_keyword?: string | null
+          funnel_stage?: string | null
           hashtags?: string | null
           id?: string
+          organic_metrics?: Json
           platform?: string
+          published_at?: string | null
+          published_url?: string | null
           scheduled_date?: string
           scheduled_time?: string | null
           status?: string
           title?: string
           updated_at?: string
+          utm_content?: string | null
         }
         Relationships: [
           {
@@ -1358,6 +1412,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -1592,12 +1653,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1621,11 +1682,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1646,11 +1707,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1671,11 +1732,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1688,11 +1749,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
