@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // The package's browser entry is UMD; select its ESM build so the
+      // default import remains a React component under Vite 8.
+      "lottie-react": fileURLToPath(new URL("./node_modules/lottie-react/build/index.es.js", import.meta.url)),
     },
   },
 }));
