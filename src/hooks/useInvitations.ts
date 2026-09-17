@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLogger";
 
-interface Invitation {
+export interface Invitation {
   id: string;
   email: string;
   company_name: string | null;
@@ -15,6 +15,19 @@ interface Invitation {
   used_at: string | null;
   invited_by: string | null;
 }
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+
+  return fallback;
+};
 
 export function useInvitations() {
   const { toast } = useToast();
@@ -62,7 +75,7 @@ export function useInvitations() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       toast({
-        title: "Zaproszenie wysłane",
+        title: "Zaproszenie utworzone",
         description: "Link rejestracyjny został wygenerowany",
       });
       logActivity("invitation_create", "invitation", data.id, variables.email, {
@@ -70,10 +83,10 @@ export function useInvitations() {
         company_name: variables.companyName,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Błąd",
-        description: error.message || "Nie udało się utworzyć zaproszenia",
+        description: getErrorMessage(error, "Nie udało się utworzyć zaproszenia"),
         variant: "destructive",
       });
     },
@@ -95,10 +108,10 @@ export function useInvitations() {
         description: "Zaproszenie zostało usunięte",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Błąd",
-        description: error.message || "Nie udało się usunąć zaproszenia",
+        description: getErrorMessage(error, "Nie udało się usunąć zaproszenia"),
         variant: "destructive",
       });
     },

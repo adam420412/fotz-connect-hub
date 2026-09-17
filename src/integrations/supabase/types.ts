@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -61,13 +61,20 @@ export type Database = {
           client_name: string
           client_phone: string | null
           created_at: string
+          external_event_id: string | null
           id: string
+          landing_page: string | null
           lead_id: string | null
+          metadata: Json
           notes: string | null
           service_type: string
           source: string | null
           status: string
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           booking_date: string
@@ -76,13 +83,20 @@ export type Database = {
           client_name: string
           client_phone?: string | null
           created_at?: string
+          external_event_id?: string | null
           id?: string
+          landing_page?: string | null
           lead_id?: string | null
+          metadata?: Json
           notes?: string | null
           service_type?: string
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           booking_date?: string
@@ -91,13 +105,20 @@ export type Database = {
           client_name?: string
           client_phone?: string | null
           created_at?: string
+          external_event_id?: string | null
           id?: string
+          landing_page?: string | null
           lead_id?: string | null
+          metadata?: Json
           notes?: string | null
           service_type?: string
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -296,11 +317,13 @@ export type Database = {
           next_step: string | null
           next_step_date: string | null
           notes: string | null
+          offer_code: string | null
           probability: number | null
           stage: string
           title: string
           updated_at: string
           value: number | null
+          won_at: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -312,11 +335,13 @@ export type Database = {
           next_step?: string | null
           next_step_date?: string | null
           notes?: string | null
+          offer_code?: string | null
           probability?: number | null
           stage?: string
           title: string
           updated_at?: string
           value?: number | null
+          won_at?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -328,11 +353,13 @@ export type Database = {
           next_step?: string | null
           next_step_date?: string | null
           notes?: string | null
+          offer_code?: string | null
           probability?: number | null
           stage?: string
           title?: string
           updated_at?: string
           value?: number | null
+          won_at?: string | null
         }
         Relationships: [
           {
@@ -491,6 +518,182 @@ export type Database = {
         }
         Relationships: []
       }
+      growth_campaigns: {
+        Row: {
+          budget: number
+          code: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          ends_on: string | null
+          id: string
+          name: string
+          notes: string | null
+          objective: string | null
+          offer_code: string | null
+          offer_value: number | null
+          starts_on: string | null
+          status: string
+          target_segment: string | null
+          updated_at: string
+          utm_campaign: string | null
+        }
+        Insert: {
+          budget?: number
+          code: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          ends_on?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          objective?: string | null
+          offer_code?: string | null
+          offer_value?: number | null
+          starts_on?: string | null
+          status?: string
+          target_segment?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+        }
+        Update: {
+          budget?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          ends_on?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          objective?: string | null
+          offer_code?: string | null
+          offer_value?: number | null
+          starts_on?: string | null
+          status?: string
+          target_segment?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_events: {
+        Row: {
+          booking_id: string | null
+          channel: string
+          error_message: string | null
+          event_type: string
+          external_event_id: string | null
+          id: string
+          idempotency_key: string
+          lead_id: string | null
+          payload: Json
+          processed_at: string | null
+          processing_started_at: string
+          provider: string
+          received_at: string
+          status: string
+        }
+        Insert: {
+          booking_id?: string | null
+          channel: string
+          error_message?: string | null
+          event_type: string
+          external_event_id?: string | null
+          id?: string
+          idempotency_key: string
+          lead_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_started_at?: string
+          provider: string
+          received_at?: string
+          status?: string
+        }
+        Update: {
+          booking_id?: string | null
+          channel?: string
+          error_message?: string | null
+          event_type?: string
+          external_event_id?: string | null
+          id?: string
+          idempotency_key?: string
+          lead_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_started_at?: string
+          provider?: string
+          received_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_sources: {
+        Row: {
+          channel: string
+          created_at: string
+          direction: string
+          display_name: string
+          last_error: string | null
+          last_event_at: string | null
+          metadata: Json
+          provider: string
+          setup_note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          direction?: string
+          display_name: string
+          last_error?: string | null
+          last_event_at?: string | null
+          metadata?: Json
+          provider: string
+          setup_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          direction?: string
+          display_name?: string
+          last_error?: string | null
+          last_event_at?: string | null
+          metadata?: Json
+          provider?: string
+          setup_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           company_name: string | null
@@ -527,51 +730,229 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_touchpoints: {
+        Row: {
+          campaign_id: string | null
+          channel: string
+          content_key: string | null
+          created_at: string
+          cta_keyword: string | null
+          event_type: string
+          external_contact_id: string | null
+          external_event_id: string | null
+          fbclid: string | null
+          gclid: string | null
+          id: string
+          integration_event_id: string | null
+          landing_page: string | null
+          lead_id: string
+          message: string | null
+          metadata: Json
+          msclkid: string | null
+          occurred_at: string
+          provider: string | null
+          referrer: string | null
+          source_detail: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel: string
+          content_key?: string | null
+          created_at?: string
+          cta_keyword?: string | null
+          event_type: string
+          external_contact_id?: string | null
+          external_event_id?: string | null
+          fbclid?: string | null
+          gclid?: string | null
+          id?: string
+          integration_event_id?: string | null
+          landing_page?: string | null
+          lead_id: string
+          message?: string | null
+          metadata?: Json
+          msclkid?: string | null
+          occurred_at?: string
+          provider?: string | null
+          referrer?: string | null
+          source_detail?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel?: string
+          content_key?: string | null
+          created_at?: string
+          cta_keyword?: string | null
+          event_type?: string
+          external_contact_id?: string | null
+          external_event_id?: string | null
+          fbclid?: string | null
+          gclid?: string | null
+          id?: string
+          integration_event_id?: string | null
+          landing_page?: string | null
+          lead_id?: string
+          message?: string | null
+          metadata?: Json
+          msclkid?: string | null
+          occurred_at?: string
+          provider?: string | null
+          referrer?: string | null
+          source_detail?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_touchpoints_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_touchpoints_integration_event_id_fkey"
+            columns: ["integration_event_id"]
+            isOneToOne: false
+            referencedRelation: "integration_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_touchpoints_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
           company: string | null
+          consent_at: string | null
+          consent_marketing: boolean
+          consent_source: string | null
           created_at: string
-          email: string
+          email: string | null
+          email_normalized: string | null
+          external_id: string | null
+          external_url: string | null
+          fbclid: string | null
+          first_touch_at: string
+          gclid: string | null
           id: string
+          landing_page: string | null
+          last_touch_at: string
+          lead_score: number
+          metadata: Json
+          msclkid: string | null
           name: string
           next_step: string | null
           next_step_date: string | null
           notes: string | null
           phone: string | null
+          phone_normalized: string | null
           source: string
+          source_channel: string
+          source_detail: string | null
+          source_provider: string | null
           status: string
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           assigned_to?: string | null
           company?: string | null
+          consent_at?: string | null
+          consent_marketing?: boolean
+          consent_source?: string | null
           created_at?: string
-          email: string
+          email?: string | null
+          email_normalized?: string | null
+          external_id?: string | null
+          external_url?: string | null
+          fbclid?: string | null
+          first_touch_at?: string
+          gclid?: string | null
           id?: string
+          landing_page?: string | null
+          last_touch_at?: string
+          lead_score?: number
+          metadata?: Json
+          msclkid?: string | null
           name: string
           next_step?: string | null
           next_step_date?: string | null
           notes?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           source?: string
+          source_channel?: string
+          source_detail?: string | null
+          source_provider?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           assigned_to?: string | null
           company?: string | null
+          consent_at?: string | null
+          consent_marketing?: boolean
+          consent_source?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
+          email_normalized?: string | null
+          external_id?: string | null
+          external_url?: string | null
+          fbclid?: string | null
+          first_touch_at?: string
+          gclid?: string | null
           id?: string
+          landing_page?: string | null
+          last_touch_at?: string
+          lead_score?: number
+          metadata?: Json
+          msclkid?: string | null
           name?: string
           next_step?: string | null
           next_step_date?: string | null
           notes?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           source?: string
+          source_channel?: string
+          source_detail?: string | null
+          source_provider?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {
@@ -958,45 +1339,72 @@ export type Database = {
       scheduled_posts: {
         Row: {
           author_id: string | null
+          campaign_id: string | null
           client_name: string | null
           content: string
+          content_key: string | null
+          content_pillar: string | null
           created_at: string
+          cta_keyword: string | null
+          funnel_stage: string | null
           hashtags: string | null
           id: string
+          organic_metrics: Json
           platform: string
+          published_at: string | null
+          published_url: string | null
           scheduled_date: string
           scheduled_time: string | null
           status: string
           title: string
           updated_at: string
+          utm_content: string | null
         }
         Insert: {
           author_id?: string | null
+          campaign_id?: string | null
           client_name?: string | null
           content: string
+          content_key?: string | null
+          content_pillar?: string | null
           created_at?: string
+          cta_keyword?: string | null
+          funnel_stage?: string | null
           hashtags?: string | null
           id?: string
+          organic_metrics?: Json
           platform: string
+          published_at?: string | null
+          published_url?: string | null
           scheduled_date: string
           scheduled_time?: string | null
           status?: string
           title: string
           updated_at?: string
+          utm_content?: string | null
         }
         Update: {
           author_id?: string | null
+          campaign_id?: string | null
           client_name?: string | null
           content?: string
+          content_key?: string | null
+          content_pillar?: string | null
           created_at?: string
+          cta_keyword?: string | null
+          funnel_stage?: string | null
           hashtags?: string | null
           id?: string
+          organic_metrics?: Json
           platform?: string
+          published_at?: string | null
+          published_url?: string | null
           scheduled_date?: string
           scheduled_time?: string | null
           status?: string
           title?: string
           updated_at?: string
+          utm_content?: string | null
         }
         Relationships: [
           {
@@ -1004,6 +1412,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "growth_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -1238,12 +1653,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1267,11 +1682,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1292,11 +1707,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1317,11 +1732,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1334,11 +1749,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

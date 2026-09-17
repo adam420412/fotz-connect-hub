@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +33,7 @@ import SalesFunnel from "@/components/crm/SalesFunnel";
 import { exportLeadsToCSV } from "@/utils/csvExport";
 import { useToast } from "@/hooks/use-toast";
 import { getNextStepStatus } from "@/components/crm/NextStepBadge";
+import { normalizeLegacySource } from "@/lib/growthSources";
 
 type NextStepFilter = "all" | "today" | "overdue" | "missing";
 
@@ -73,17 +75,20 @@ const CRM = () => {
   const filteredLeads = leads.filter(
     (lead) =>
       (lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.external_url?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.company?.toLowerCase().includes(searchQuery.toLowerCase())) &&
       matchesNextStep(lead.next_step_date, lead.next_step) &&
-      (!linkedinOnly || lead.email === "brak@linkedin")
+      (!linkedinOnly || (lead.source_channel || normalizeLegacySource(lead.source)) === "linkedin_kanbox")
   );
 
   const filteredDeals = deals.filter((deal) =>
     matchesNextStep(deal.next_step_date, deal.next_step)
   );
 
-  const linkedinCount = leads.filter((l) => l.email === "brak@linkedin").length;
+  const linkedinCount = leads.filter(
+    (lead) => (lead.source_channel || normalizeLegacySource(lead.source)) === "linkedin_kanbox"
+  ).length;
 
   const nextStepCounts = {
     all: leads.length + deals.length,
@@ -120,18 +125,11 @@ const CRM = () => {
             <p className="text-muted-foreground">Zarządzanie leadami i sprzedażą</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-webhook`;
-                navigator.clipboard.writeText(url).then(
-                  () => toast({ title: "Skopiowano", description: url }),
-                  () => toast({ title: "Błąd", description: "Nie udało się skopiować", variant: "destructive" })
-                );
-              }}
-            >
-              <LinkIcon className="h-4 w-4 mr-2" />
-              Skopiuj URL webhooka
+            <Button variant="outline" asChild>
+              <Link to="/growth-os">
+                <LinkIcon className="h-4 w-4 mr-2" />
+                Integracje i źródła
+              </Link>
             </Button>
             <Button variant="outline" onClick={handleExportCSV}>
               <Download className="h-4 w-4 mr-2" />

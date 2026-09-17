@@ -10,6 +10,8 @@ import { z } from "zod";
 
 const emailSchema = z.string().email("Nieprawidłowy adres email");
 const passwordSchema = z.string().min(6, "Hasło musi mieć minimum 6 znaków");
+const fullNameSchema = z.string().trim().min(2, "Podaj imię i nazwisko");
+const invitationTokenSchema = z.string().regex(/^[a-f0-9]{64}$/i);
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -22,10 +24,17 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    fullName?: string;
+  }>({});
 
-  // Check for invitation token
-  const inviteToken = searchParams.get("invite");
+  const rawInviteToken = searchParams.get("invite")?.trim() ?? "";
+  const inviteToken = invitationTokenSchema.safeParse(rawInviteToken).success
+    ? rawInviteToken
+    : null;
+  const hasInvalidInviteToken = rawInviteToken.length > 0 && !inviteToken;
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -40,7 +49,7 @@ const Auth = () => {
   }, [inviteToken]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; fullName?: string } = {};
 
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -50,6 +59,13 @@ const Auth = () => {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+
+    if (!isLogin) {
+      const fullNameResult = fullNameSchema.safeParse(fullName);
+      if (!fullNameResult.success) {
+        newErrors.fullName = fullNameResult.error.errors[0].message;
+      }
     }
 
     setErrors(newErrors);
@@ -87,12 +103,30 @@ const Auth = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        if (!inviteToken) {
+          toast({
+            title: "Wymagane zaproszenie",
+            description: "Poproś administratora o nowy link rejestracyjny.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error } = await signUp(email, password, fullName.trim(), inviteToken);
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
               title: "Konto już istnieje",
               description: "Ten email jest już zarejestrowany. Spróbuj się zalogować.",
+              variant: "destructive",
+            });
+          } else if (
+            error.message.includes("INVITATION_REQUIRED") ||
+            error.message.includes("Database error saving new user")
+          ) {
+            toast({
+              title: "Zaproszenie jest nieważne",
+              description: "Sprawdź adres email albo poproś administratora o nowy link.",
               variant: "destructive",
             });
           } else {
@@ -153,10 +187,17 @@ const Auth = () => {
                     type="text"
                     placeholder="Jan Kowalski"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      setErrors((prev) => ({ ...prev, fullName: undefined }));
+                    }}
                     className="pl-10"
+                    required
                   />
                 </div>
+                {errors.fullName && (
+                  <p className="text-sm text-destructive">{errors.fullName}</p>
+                )}
               </div>
             )}
 
@@ -216,23 +257,37 @@ const Auth = () => {
           </form>
 
           {/* Toggle */}
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">
-              {isLogin ? "Nie masz konta?" : "Masz już konto?"}
-            </span>{" "}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-medium hover:underline"
-            >
-              {isLogin ? "Zarejestruj się" : "Zaloguj się"}
-            </button>
-          </div>
+          {inviteToken ? (
+            <div className="text-center text-sm">
+              <span className="text-muted-foreground">
+                {isLogin ? "Masz zaproszenie?" : "Masz już konto?"}
+              </span>{" "}
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-primary font-medium hover:underline"
+              >
+                {isLogin ? "Utwórz konto" : "Zaloguj się"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">
+              Nowe konta są tworzone wyłącznie z zaproszenia administratora.
+            </p>
+          )}
 
           {inviteToken && !isLogin && (
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-center">
               <p className="text-sm text-muted-foreground">
                 Zostałeś zaproszony do FOTZ Studio. Utwórz konto, aby uzyskać dostęp.
+              </p>
+            </div>
+          )}
+
+          {hasInvalidInviteToken && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-center">
+              <p className="text-sm text-destructive">
+                Ten link zaproszenia jest nieprawidłowy. Poproś administratora o nowy link.
               </p>
             </div>
           )}

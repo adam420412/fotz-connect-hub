@@ -13,7 +13,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.create-admin-user]
-verify_jwt = false
+verify_jwt = true
+
+[functions.create-test-users]
+verify_jwt = true
 
 [functions.crm-webhook]
 verify_jwt = false

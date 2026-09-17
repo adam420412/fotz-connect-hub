@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCRM, Lead } from "@/hooks/useCRM";
+import { useCRM } from "@/hooks/useCRM";
+import { GROWTH_SOURCES, normalizeLegacySource, providerForGrowthSource } from "@/lib/growthSources";
 
 interface LeadDialogProps {
   open: boolean;
@@ -32,12 +33,14 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
     email: "",
     phone: "",
     company: "",
-    source: "manual",
+    source_channel: "manual",
+    external_url: "",
     status: "new",
     notes: "",
     next_step: "",
     next_step_date: "",
   });
+  const [identityError, setIdentityError] = useState("");
 
   const existingLead = leadId ? leads.find((l) => l.id === leadId) : null;
 
@@ -45,10 +48,11 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
     if (existingLead) {
       setFormData({
         name: existingLead.name,
-        email: existingLead.email,
+        email: existingLead.email || "",
         phone: existingLead.phone || "",
         company: existingLead.company || "",
-        source: existingLead.source,
+        source_channel: existingLead.source_channel || normalizeLegacySource(existingLead.source),
+        external_url: existingLead.external_url || "",
         status: existingLead.status,
         notes: existingLead.notes || "",
         next_step: existingLead.next_step || "",
@@ -60,7 +64,8 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
         email: "",
         phone: "",
         company: "",
-        source: "manual",
+        source_channel: "manual",
+        external_url: "",
         status: "new",
         notes: "",
         next_step: "",
@@ -72,10 +77,23 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.email.trim() && !formData.phone.trim() && !formData.external_url.trim()) {
+      setIdentityError("Podaj email, telefon albo adres profilu LinkedIn/Instagram.");
+      return;
+    }
+    setIdentityError("");
+
     const payload = {
-      ...formData,
+      name: formData.name,
+      email: formData.email || null,
       phone: formData.phone || null,
       company: formData.company || null,
+      source: formData.source_channel,
+      source_channel: formData.source_channel,
+      source_detail: "manual:crm",
+      source_provider: providerForGrowthSource(formData.source_channel),
+      external_url: formData.external_url || null,
+      status: formData.status,
       notes: formData.notes || null,
       next_step: formData.next_step || null,
       next_step_date: formData.next_step_date || null,
@@ -117,15 +135,26 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="external_url">Profil LinkedIn / Instagram</Label>
+            <Input
+              id="external_url"
+              type="url"
+              value={formData.external_url}
+              onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
+              placeholder="https://www.linkedin.com/in/..."
+            />
+            {identityError && <p className="text-sm text-destructive">{identityError}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -150,20 +179,18 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="source">Źródło</Label>
+              <Label htmlFor="source_channel">Źródło</Label>
               <Select
-                value={formData.source}
-                onValueChange={(value) => setFormData({ ...formData, source: value })}
+                value={formData.source_channel}
+                onValueChange={(value) => setFormData({ ...formData, source_channel: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual">Ręczne</SelectItem>
-                  <SelectItem value="fotz.pl">fotz.pl</SelectItem>
-                  <SelectItem value="referral">Polecenie</SelectItem>
-                  <SelectItem value="social">Social media</SelectItem>
-                  <SelectItem value="other">Inne</SelectItem>
+                  {GROWTH_SOURCES.map((source) => (
+                    <SelectItem key={source.value} value={source.value}>{source.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

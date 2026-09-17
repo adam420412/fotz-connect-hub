@@ -6,7 +6,10 @@ export const exportLeadsToCSV = (leads: Lead[]) => {
     "Email",
     "Telefon",
     "Firma",
-    "Źródło",
+    "Kanał",
+    "Szczegół źródła",
+    "Profil zewnętrzny",
+    "Kampania UTM",
     "Status",
     "Notatki",
     "Data utworzenia",
@@ -14,10 +17,13 @@ export const exportLeadsToCSV = (leads: Lead[]) => {
 
   const rows = leads.map((lead) => [
     lead.name,
-    lead.email,
+    lead.email || "",
     lead.phone || "",
     lead.company || "",
-    lead.source,
+    lead.source_channel || lead.source,
+    lead.source_detail || lead.source,
+    lead.external_url || "",
+    lead.utm_campaign || "",
     lead.status,
     lead.notes?.replace(/"/g, '""') || "",
     new Date(lead.created_at).toLocaleDateString("pl-PL"),
@@ -26,7 +32,7 @@ export const exportLeadsToCSV = (leads: Lead[]) => {
   const csvContent = [
     headers.join(";"),
     ...rows.map((row) =>
-      row.map((cell) => `"${cell}"`).join(";")
+      row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(";")
     ),
   ].join("\n");
 

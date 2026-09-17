@@ -24,6 +24,7 @@ import {
   Calendar,
   LayoutTemplate,
   Contact,
+  Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -67,13 +68,14 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
     { icon: Calendar, label: "Kalendarz", href: "/team-calendar" },
     { icon: CalendarClock, label: "Harmonogram", href: "/post-schedule" },
     { icon: Users, label: "Zespół", href: "/team" },
-    { icon: UserPlus, label: "Zaproszenia", href: "/invitations" },
     { icon: MessageSquare, label: "Wiadomości", href: "/messages" },
     { icon: Bot, label: "AI Asystent", href: "/ai-assistant" },
     { icon: CalendarDays, label: "Codzienny Post", href: "/daily-post" },
     { icon: Newspaper, label: "Newsy Marketing", href: "/marketing-news" },
     ...(canAccessCRM ? [{ icon: Contact, label: "CRM", href: "/crm" }] : []),
+    ...(canAccessCRM ? [{ icon: Workflow, label: "Growth OS", href: "/growth-os" }] : []),
     ...(isAdmin ? [
+      { icon: UserPlus, label: "Zaproszenia", href: "/invitations" },
       { icon: Shield, label: "Panel Admina", href: "/admin" },
       { icon: BarChart3, label: "Raporty", href: "/reports" },
       { icon: BarChart3, label: "KPI Dashboard", href: "/admin-kpi" },

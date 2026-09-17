@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useAuth, AppRole } from "@/hooks/useAuth";
-import { User, Session } from "@supabase/supabase-js";
+import { AuthError, User, Session } from "@supabase/supabase-js";
 
 interface UserProfile {
   id: string;
@@ -18,9 +18,14 @@ interface AuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   isTeamMember: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
-  signOut: () => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    invitationToken: string,
+  ) => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
