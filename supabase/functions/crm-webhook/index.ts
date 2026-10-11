@@ -169,13 +169,41 @@ const jsonResponse = (req: Request, body: JsonObject, status = 200) => new Respo
   { status, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
 );
 
-const hasValidSecret = (req: Request): boolean => {
-  const expected = Deno.env.get("CRM_WEBHOOK_SECRET") ?? "";
-  if (!expected) return false;
+type WebhookAuthScope = "primary" | "meta" | null;
+
+const getWebhookAuthScope = (req: Request): WebhookAuthScope => {
+  const primarySecret = Deno.env.get("CRM_WEBHOOK_SECRET") ?? "";
+  const metaSecret = Deno.env.get("CRM_META_WEBHOOK_SECRET") ?? "";
   const authorization = req.headers.get("authorization") ?? "";
   const bearer = authorization.toLowerCase().startsWith("bearer ") ? authorization.slice(7).trim() : "";
   const supplied = req.headers.get("x-webhook-secret") || bearer;
-  return supplied.length === expected.length && supplied === expected;
+  // Preserve the existing website credential. The optional Meta credential
+  // stays disabled until its owner installs a separate, sufficiently long value.
+  if (primarySecret && supplied.length === primarySecret.length && supplied === primarySecret) return "primary";
+  if (metaSecret.length >= 32 && supplied.length === metaSecret.length && supplied === metaSecret) return "meta";
+  return null;
+};
+
+const META_FORM_DETAILS: Readonly<Record<string, string>> = {
+  "917137684811951": "meta:lead-form:www",
+  "1825068312268829": "meta:lead-form:wideo",
+};
+
+const isAllowedMetaIntake = (payload: JsonObject, event: NormalizedEvent): boolean => {
+  const explicitType = pickString(80, payload.type, payload.event_type, payload.eventType);
+  const formId = event.metadata.form_id;
+  const leadgenId = event.metadata.leadgen_id;
+  return (explicitType === "lead" || explicitType === "lead.captured")
+    && event.eventType === "lead.captured"
+    && event.provider === "meta_ads"
+    && event.channel === "meta_ads"
+    && typeof formId === "string"
+    && Object.hasOwn(META_FORM_DETAILS, formId)
+    && event.sourceDetail === META_FORM_DETAILS[formId]
+    && typeof leadgenId === "string"
+    && /^\d+$/.test(leadgenId)
+    && event.externalEventId === leadgenId
+    && event.idempotencyKey === `meta_ads:${leadgenId}`;
 };
 
 const mayUseLegacyPublicIntake = (req: Request): boolean => {
@@ -431,8 +459,10 @@ serve(async (req) => {
 
   const contentLength = Number(req.headers.get("content-length") || 0);
   if (contentLength > 64_000) return jsonResponse(req, { success: false, error: "PAYLOAD_TOO_LARGE" }, 413);
-  if (!hasValidSecret(req) && !mayUseLegacyPublicIntake(req)) {
-    const configured = Boolean(Deno.env.get("CRM_WEBHOOK_SECRET"));
+  const authScope = getWebhookAuthScope(req);
+  if (!authScope && !mayUseLegacyPublicIntake(req)) {
+    const configured = Boolean(Deno.env.get("CRM_WEBHOOK_SECRET"))
+      || (Deno.env.get("CRM_META_WEBHOOK_SECRET") ?? "").length >= 32;
     return jsonResponse(req, { success: false, error: configured ? "UNAUTHORIZED" : "WEBHOOK_NOT_CONFIGURED" }, configured ? 401 : 503);
   }
 
@@ -451,6 +481,9 @@ serve(async (req) => {
     }
 
     const event = await normalizeEvent(payload, req);
+    if (authScope === "meta" && !isAllowedMetaIntake(payload, event)) {
+      return jsonResponse(req, { success: false, error: "META_INTAKE_SCOPE_DENIED" }, 403);
+    }
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) throw new Error("SUPABASE_SERVER_CONFIG_MISSING");
