@@ -187,6 +187,7 @@ const getWebhookAuthScope = (req: Request): WebhookAuthScope => {
 const META_FORM_DETAILS: Readonly<Record<string, string>> = {
   "917137684811951": "meta:lead-form:www",
   "1825068312268829": "meta:lead-form:wideo",
+  "1088639844014115": "meta:lead-form:www-2026-11",
 };
 
 const isAllowedMetaIntake = (payload: JsonObject, event: NormalizedEvent): boolean => {
