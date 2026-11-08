@@ -191,6 +191,7 @@ const META_FORM_DETAILS: Readonly<Record<string, string>> = {
   "1088639844014115": "meta:lead-form:www-2026-11",
   "1135713892171107": "meta:lead-form:www-start-1490",
   "1103341015857330": "meta:lead-form:www-sms-2026-11",
+  "2645634842619727": "meta:lead-form:wideo-sms-2026-11",
 };
 
 const isAllowedMetaIntake = (payload: JsonObject, event: NormalizedEvent): boolean => {
@@ -323,7 +324,7 @@ const normalizeEvent = async (payload: JsonObject, req: Request): Promise<Normal
   };
   const qualificationText = Object.values(qualification).filter(Boolean).join(" ").toLowerCase();
   const targetBudget = /(3\s*[-–]\s*5\s*k|3\s*000|4\s*000|5\s*000|3000|4000|5000|1\s*490|1490|powyżej\s*3|above\s*3)/i.test(qualificationText);
-  const nearTerm = /(teraz|jak najszybciej|30 dni|ten miesiąc|1\s*[-–]\s*3 mies|this month|asap)/i.test(qualificationText);
+  const nearTerm = /(teraz|jak najszybciej|30 dni|ten miesiąc|w\s*ciągu\s*miesiąca|1\s*[-–]\s*3 mies|1\s*do\s*3 mies|this month|asap)/i.test(qualificationText);
   const decisionMaker = /(właściciel|wlasciciel|founder|owner|ceo|decyduję|decyduje|decision maker)/i.test(qualificationText);
   const calculatedScore = Math.min(100,
     10
