@@ -75,7 +75,7 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
     }
   }, [existingLead, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.email.trim() && !formData.phone.trim() && !formData.external_url.trim()) {
@@ -101,11 +101,10 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
       assigned_to: existingLead?.assigned_to ?? null,
     };
 
-    if (existingLead) {
-      updateLead.mutate({ id: existingLead.id, ...payload });
-    } else {
-      createLead.mutate(payload);
-    }
+    try {
+      if (existingLead) await updateLead.mutateAsync({ id: existingLead.id, ...payload });
+      else await createLead.mutateAsync(payload);
+    } catch { return; }
 
     onOpenChange(false);
     onClose();
@@ -252,7 +251,7 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
             <Button type="button" variant="outline" onClick={handleClose}>
               Anuluj
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={createLead.isPending || updateLead.isPending}>
               {existingLead ? "Zapisz" : "Dodaj lead"}
             </Button>
           </div>
