@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { addWorkingDays, easterSunday, isWorkingDay, nextWorkingDay, onOrNextWorkingDay, warsawToday, dateShortcut, isContactTime } from "./workingDays";
+import { addWorkingDays, easterSunday, isWorkingDay, nextWorkingDay, onOrNextWorkingDay, warsawToday, dateShortcut, isContactTime } from "../src/lib/workingDays";
 
 test("9 November 2026 is a working Monday", () => expect(isWorkingDay("2026-11-09")).toBe(true));
 test("Saturday is not working", () => expect(isWorkingDay("2026-11-07")).toBe(false));
