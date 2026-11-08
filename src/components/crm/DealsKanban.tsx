@@ -7,6 +7,9 @@ import { Building, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import NextStepBadge from "./NextStepBadge";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import DealDialog from "./DealDialog";
 
 interface DealsKanbanProps {
   deals: Deal[];
@@ -24,6 +27,7 @@ const stages = [
 
 const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
   const { updateDeal } = useCRM();
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pl-PL", {
@@ -63,6 +67,7 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
   }
 
   return (
+    <>
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stages.map((stage) => {
@@ -104,6 +109,7 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
                           >
                             <CardContent className="p-3 space-y-2">
                               <h4 className="font-medium text-sm">{deal.title}</h4>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingDeal(deal)}>Otwórz</Button>
                               {getLeadCompany(deal.lead_id) && (
                                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                                   <Building className="h-3 w-3" />
@@ -146,6 +152,8 @@ const DealsKanban = ({ deals, leads, isLoading }: DealsKanbanProps) => {
         })}
       </div>
     </DragDropContext>
+    <DealDialog open={Boolean(editingDeal)} onOpenChange={(open) => { if (!open) setEditingDeal(null); }} leads={leads} deal={editingDeal} />
+    </>
   );
 };
 

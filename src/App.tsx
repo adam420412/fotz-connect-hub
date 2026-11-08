@@ -31,6 +31,7 @@ import Reports from "./pages/Reports";
 import TeamCalendar from "./pages/TeamCalendar";
 import ProjectTemplates from "./pages/ProjectTemplates";
 import CRM from "./pages/CRM";
+import MyDay from "./pages/MyDay";
 import GrowthOS from "./pages/GrowthOS";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import AdminKPIDashboard from "./pages/AdminKPIDashboard";
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/team-calendar" element={<ProtectedRoute requireTeamMember><TeamCalendar /></ProtectedRoute>} />
                 <Route path="/templates" element={<ProtectedRoute requireTeamMember><ProjectTemplates /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute requireManagerOrAdmin><CRM /></ProtectedRoute>} />
+                <Route path="/moj-dzien" element={<ProtectedRoute requireManagerOrAdmin><MyDay /></ProtectedRoute>} />
                 <Route path="/growth-os" element={<ProtectedRoute requireManagerOrAdmin><GrowthOS /></ProtectedRoute>} />
                 <Route path="/employee-dashboard" element={<ProtectedRoute requireTeamMember><EmployeeDashboard /></ProtectedRoute>} />
                 <Route path="/admin-kpi" element={<ProtectedRoute requireAdmin><AdminKPIDashboard /></ProtectedRoute>} />

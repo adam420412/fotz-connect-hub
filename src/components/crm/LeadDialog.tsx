@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCRM } from "@/hooks/useCRM";
+import WorkingDateInput from "./WorkingDateInput";
 import { GROWTH_SOURCES, normalizeLegacySource, providerForGrowthSource } from "@/lib/growthSources";
 
 interface LeadDialogProps {
@@ -97,7 +98,7 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
       notes: formData.notes || null,
       next_step: formData.next_step || null,
       next_step_date: formData.next_step_date || null,
-      assigned_to: null,
+      assigned_to: existingLead?.assigned_to ?? null,
     };
 
     if (existingLead) {
@@ -117,7 +118,7 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{existingLead ? "Edytuj lead" : "Nowy lead"}</DialogTitle>
         </DialogHeader>
@@ -208,6 +209,7 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
                   <SelectItem value="new">Nowy</SelectItem>
                   <SelectItem value="contacted">Po kontakcie</SelectItem>
                   <SelectItem value="qualified">Kwalifikowany</SelectItem>
+                  <SelectItem value="proposal">Oferta wysłana</SelectItem>
                   <SelectItem value="nurture">Nurture</SelectItem>
                   <SelectItem value="lost">Przegrany</SelectItem>
                 </SelectContent>
@@ -227,11 +229,10 @@ const LeadDialog = ({ open, onOpenChange, leadId, onClose }: LeadDialogProps) =>
             </div>
             <div className="space-y-2">
               <Label htmlFor="next_step_date">Data następnego kroku</Label>
-              <Input
+              <WorkingDateInput
                 id="next_step_date"
-                type="date"
                 value={formData.next_step_date}
-                onChange={(e) => setFormData({ ...formData, next_step_date: e.target.value })}
+                onChange={(date) => setFormData({ ...formData, next_step_date: date })}
               />
             </div>
           </div>

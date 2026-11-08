@@ -2,17 +2,16 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Calendar } from "lucide-react";
+import { calendarDate, warsawToday } from "@/lib/workingDays";
 
 export type NextStepStatus = "overdue" | "today" | "upcoming" | "none";
 
 export const getNextStepStatus = (date: string | null | undefined): NextStepStatus => {
   if (!date) return "none";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  if (d.getTime() === today.getTime()) return "today";
-  if (d.getTime() < today.getTime()) return "overdue";
+  const today = warsawToday();
+  const d = calendarDate(date);
+  if (d === today) return "today";
+  if (d < today) return "overdue";
   return "upcoming";
 };
 

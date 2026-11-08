@@ -17,7 +17,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const { user, isLoading: authLoading, signIn, signUp } = useAuthContext();
+  const { user, role, isLoading: authLoading, signIn, signUp } = useAuthContext();
 
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,9 +38,9 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/dashboard");
+      navigate(role === "admin" ? "/moj-dzien" : "/dashboard");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, role, authLoading, navigate]);
 
   useEffect(() => {
     if (inviteToken) {

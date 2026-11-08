@@ -1635,6 +1635,18 @@ export type Database = {
         Returns: boolean
       }
       is_team_member: { Args: { _user_id: string }; Returns: boolean }
+      record_crm_contact: {
+        Args: {
+          p_contact_type: string
+          p_entity_id: string
+          p_entity_type: string
+          p_next_date: string
+          p_next_step: string
+          p_note: string
+          p_result: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "manager" | "employee" | "client"

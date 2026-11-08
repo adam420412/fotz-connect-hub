@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from "react";
+import { ReactNode, createContext, useContext, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
@@ -8,6 +8,7 @@ interface DashboardLayoutProps {
   showNewButton?: boolean;
   onNewClick?: () => void;
   newButtonLabel?: string;
+  mobileFriendly?: boolean;
 }
 
 // Context for sidebar state
@@ -29,8 +30,17 @@ const DashboardLayout = ({
   showNewButton,
   onNewClick,
   newButtonLabel,
+  mobileFriendly = false,
 }: DashboardLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    if (!mobileFriendly) return;
+    const media = window.matchMedia("(max-width: 767px)");
+    const adjust = () => setCollapsed(media.matches);
+    adjust();
+    media.addEventListener("change", adjust);
+    return () => media.removeEventListener("change", adjust);
+  }, [mobileFriendly]);
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
@@ -46,7 +56,7 @@ const DashboardLayout = ({
             onNewClick={onNewClick}
             newButtonLabel={newButtonLabel}
           />
-          <main className="p-6">{children}</main>
+          <main className={mobileFriendly ? "min-w-0 p-3 sm:p-6" : "p-6"}>{children}</main>
         </div>
       </div>
     </SidebarContext.Provider>
