@@ -49,7 +49,7 @@ async function offline(payload: unknown, options: { secret?: string; now?: strin
     Deno: { env: { get: (key: string) => ({ CRM_WEBHOOK_SECRET: primary, CRM_META_WEBHOOK_SECRET: meta,
       SUPABASE_URL: "https://offline.invalid", SUPABASE_SERVICE_ROLE_KEY: "offline-only" }[key]) } },
     Date: FixedDate, Request, Response, Headers, TextEncoder, crypto: globalThis.crypto, AbortSignal,
-    onOrNextWorkingDay, warsawToday,
+    onOrNextWorkingDay, warsawToday: () => warsawToday(new Date(now)),
     fetch: () => { throw new Error("Network forbidden in offline webhook test"); },
     console: { log() {}, error() {} },
   });
