@@ -58,6 +58,7 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   ];
 
   const teamNav = [
+    ...(canAccessCRM ? [{ icon: CalendarDays, label: "Mój dzień", href: "/moj-dzien" }] : []),
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: LayoutDashboard, label: "Mój panel", href: "/employee-dashboard" },
     { icon: FolderKanban, label: "Projekty", href: "/projects" },

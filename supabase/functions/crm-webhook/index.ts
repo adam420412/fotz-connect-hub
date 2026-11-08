@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { onOrNextWorkingDay, warsawToday } from "../_shared/workingDays.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -189,6 +190,7 @@ const META_FORM_DETAILS: Readonly<Record<string, string>> = {
   "1825068312268829": "meta:lead-form:wideo",
   "1088639844014115": "meta:lead-form:www-2026-11",
   "1135713892171107": "meta:lead-form:www-start-1490",
+  "1103341015857330": "meta:lead-form:www-sms-2026-11",
 };
 
 const isAllowedMetaIntake = (payload: JsonObject, event: NormalizedEvent): boolean => {
@@ -624,8 +626,8 @@ serve(async (req) => {
         external_id: event.externalContactId,
         external_url: event.contact.externalUrl,
         status: "new",
-        next_step: "Skontaktuj się i potwierdź zakres, budżet oraz termin",
-        next_step_date: new Date().toISOString(),
+        next_step: "Zadzwonić",
+        next_step_date: onOrNextWorkingDay(warsawToday()),
         lead_score: event.leadScore,
         notes: event.message,
         utm_source: event.attribution.utmSource,

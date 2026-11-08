@@ -14,6 +14,7 @@ interface ContactHistoryListProps {
 
 const typeConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   call: { label: "Rozmowa", icon: Phone, color: "text-blue-500" },
+  sms: { label: "SMS", icon: MessageSquare, color: "text-primary" },
   email: { label: "Email", icon: Mail, color: "text-green-500" },
   meeting: { label: "Spotkanie", icon: Calendar, color: "text-purple-500" },
   note: { label: "Notatka", icon: FileText, color: "text-gray-500" },

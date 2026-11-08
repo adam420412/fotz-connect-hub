@@ -5,18 +5,18 @@ import Preloader from "@/components/ui/Preloader";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuthContext();
+  const { user, role, isLoading } = useAuthContext();
   const [showPreloader, setShowPreloader] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !showPreloader) {
       if (user) {
-        navigate("/dashboard");
+        navigate(role === "admin" ? "/moj-dzien" : "/dashboard");
       } else {
         navigate("/auth");
       }
     }
-  }, [user, isLoading, navigate, showPreloader]);
+  }, [user, role, isLoading, navigate, showPreloader]);
 
   const handlePreloaderComplete = () => {
     setShowPreloader(false);

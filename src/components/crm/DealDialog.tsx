@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,16 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCRM, Lead } from "@/hooks/useCRM";
+import { useCRM, Lead, Deal } from "@/hooks/useCRM";
+import WorkingDateInput from "./WorkingDateInput";
 
 interface DealDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   leads: Lead[];
+  deal?: Deal | null;
 }
 
-const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
-  const { createDeal } = useCRM();
+const DealDialog = ({ open, onOpenChange, leads, deal }: DealDialogProps) => {
+  const { createDeal, updateDeal } = useCRM();
   const [formData, setFormData] = useState({
     title: "",
     lead_id: "",
@@ -38,10 +40,19 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
     next_step_date: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setFormData({
+      title: deal?.title ?? "", lead_id: deal?.lead_id ?? "", value: String(deal?.value ?? ""),
+      stage: deal?.stage ?? "qualification", probability: String(deal?.probability ?? 10),
+      expected_close_date: deal?.expected_close_date ?? "", notes: deal?.notes ?? "",
+      next_step: deal?.next_step ?? "", next_step_date: deal?.next_step_date ?? "",
+    });
+  }, [deal, open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    createDeal.mutate({
+    const payload = {
       title: formData.title,
       lead_id: formData.lead_id || null,
       value: parseFloat(formData.value) || 0,
@@ -52,8 +63,12 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
       notes: formData.notes || null,
       next_step: formData.next_step || null,
       next_step_date: formData.next_step_date || null,
-      assigned_to: null,
-    });
+      assigned_to: deal?.assigned_to ?? null,
+    };
+    try {
+      if (deal) await updateDeal.mutateAsync({ id: deal.id, ...payload });
+      else await createDeal.mutateAsync(payload);
+    } catch { return; }
 
     setFormData({
       title: "",
@@ -74,7 +89,7 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Nowy deal</DialogTitle>
+          <DialogTitle>{deal ? "Edytuj deal" : "Nowy deal"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -185,11 +200,10 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="next_step_date">Data następnego kroku</Label>
-              <Input
+              <WorkingDateInput
                 id="next_step_date"
-                type="date"
                 value={formData.next_step_date}
-                onChange={(e) => setFormData({ ...formData, next_step_date: e.target.value })}
+                onChange={(date) => setFormData({ ...formData, next_step_date: date })}
               />
             </div>
           </div>
@@ -209,7 +223,7 @@ const DealDialog = ({ open, onOpenChange, leads }: DealDialogProps) => {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Anuluj
             </Button>
-            <Button type="submit">Dodaj deal</Button>
+            <Button type="submit" disabled={createDeal.isPending || updateDeal.isPending}>{deal ? "Zapisz" : "Dodaj deal"}</Button>
           </div>
         </form>
       </DialogContent>
