@@ -87,7 +87,7 @@ const DealDialog = ({ open, onOpenChange, leads, deal }: DealDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{deal ? "Edytuj deal" : "Nowy deal"}</DialogTitle>
         </DialogHeader>

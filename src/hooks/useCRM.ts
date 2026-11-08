@@ -180,6 +180,7 @@ export const useCRM = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["my-day"] });
       toast({ title: "Lead utworzony" });
     },
     onError: (error) => {
@@ -202,6 +203,7 @@ export const useCRM = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["my-day"] });
       toast({ title: "Lead zaktualizowany" });
     },
     onError: (error) => {
@@ -238,6 +240,7 @@ export const useCRM = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["my-day"] });
       toast({ title: "Deal utworzony" });
     },
     onError: (error) => {
@@ -260,6 +263,7 @@ export const useCRM = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["my-day"] });
       toast({ title: "Deal zaktualizowany" });
     },
     onError: (error) => {

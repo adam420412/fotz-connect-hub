@@ -84,7 +84,7 @@ export default function MyDay() {
     { title: "Bez następnego kroku", rows: rows.filter((row) => row.kind === "lead" && !row.next_step_date) },
   ];
   const sourceName = (source: string) => source.includes("meta") ? "Formularz Meta" : source === "website" ? "WWW" : GROWTH_SOURCES.find((s) => s.value === source)?.label ?? source;
-  return <DashboardLayout title="Mój dzień">
+  return <DashboardLayout title="Mój dzień" mobileFriendly>
     <Helmet><title>Mój dzień | FOTZ Studio</title><meta name="description" content="Codzienna lista kontaktów i następnych kroków CRM." /></Helmet>
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
